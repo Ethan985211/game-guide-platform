@@ -1,165 +1,128 @@
 <template>
-  <div class="articles page-container">
-    <h1 class="page-title">攻略文章</h1>
-
-    <!-- 筛选 -->
-    <div class="filters">
-      <el-input
-        v-model="searchQuery"
-        placeholder="搜索文章..."
-        clearable
-        style="width: 300px"
-        @change="loadArticles"
-      />
-      <el-select v-model="category" placeholder="文章类型" clearable @change="loadArticles">
-        <el-option label="攻略" value="guide" />
-        <el-option label="资讯" value="news" />
-        <el-option label="技巧" value="tips" />
-      </el-select>
-      <el-button type="primary" @click="$router.push('/articles/create')">发布文章</el-button>
+  <div class="articles-page page">
+    <div class="page-header">
+      <h1 class="page-title">攻略文章</h1>
+      <p class="page-subtitle">精选游戏攻略，助你快速上手</p>
     </div>
 
-    <!-- 文章列表 -->
-    <div class="articles-list">
-      <div v-for="article in articles" :key="article.id" class="article-card" @click="goToArticle(article.id)">
-        <div class="article-content">
-          <h3>{{ article.title }}</h3>
-          <p class="article-excerpt">{{ article.content.substring(0, 150) }}...</p>
+    <div class="search-bar">
+      <input 
+        v-model="searchQuery" 
+        type="text" 
+        placeholder="搜索攻略..."
+        @keyup.enter="handleSearch"
+      >
+      <button @click="handleSearch">搜索</button>
+    </div>
+
+    <router-link v-if="isLoggedIn" to="/articles/create" class="create-btn">
+      发布攻略
+    </router-link>
+
+    <div v-if="loading" class="loading">
+      <div class="loading-spinner"></div>
+    </div>
+
+    <div v-else-if="filteredArticles.length === 0" class="empty-state">
+      <h3>暂无攻略</h3>
+      <p>成为第一个发布攻略的用户吧</p>
+    </div>
+
+    <div v-else class="articles-grid-full">
+      <div 
+        v-for="article in filteredArticles" 
+        :key="article.id" 
+        class="article-card"
+        @click="goToArticle(article.id)"
+      >
+        <div class="article-image">
+          <img :src="article.cover_image || 'https://picsum.photos/640/400?random=' + article.id" :alt="article.title">
         </div>
-        <div class="article-footer">
-          <div class="author">
-            <el-avatar :size="24">{{ article.author?.username?.[0] }}</el-avatar>
-            <span>{{ article.author?.username }}</span>
-          </div>
-          <div class="stats">
-            <span>👁️ {{ article.views }}</span>
-            <span>❤️ {{ article.likes }}</span>
-            <span>{{ formatDate(article.created_at) }}</span>
-          </div>
+        <span class="article-tag">{{ article.game_name }}</span>
+        <h3>{{ article.title }}</h3>
+        <p>{{ article.summary || article.content?.slice(0, 100) }}...</p>
+        <div class="article-meta">
+          <span>{{ article.author_name }}</span>
+          <span>{{ article.likes || 0 }} 点赞</span>
+          <span>{{ article.comment_count || 0 }} 评论</span>
         </div>
       </div>
     </div>
-
-    <!-- 分页 -->
-    <div class="pagination">
-      <el-pagination
-        v-model:current-page="currentPage"
-        :page-size="20"
-        :total="total"
-        layout="prev, pager, next"
-        @current-change="loadArticles"
-      />
-    </div>
-
-    <el-empty v-if="!articles.length && !loading" description="暂无文章" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { articleAPI } from '../api'
+import { useAuthStore } from '../stores/auth'
+import api from '../api'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const articles = ref([])
+const loading = ref(true)
 const searchQuery = ref('')
-const category = ref('')
-const currentPage = ref(1)
-const total = ref(0)
-const loading = ref(false)
 
-const loadArticles = async () => {
-  loading.value = true
+const isLoggedIn = computed(() => authStore.isLoggedIn)
+
+const filteredArticles = computed(() => {
+  if (!searchQuery.value) return articles.value
+  const query = searchQuery.value.toLowerCase()
+  return articles.value.filter(article => 
+    article.title.toLowerCase().includes(query) ||
+    article.game_name?.toLowerCase().includes(query)
+  )
+})
+
+const goToArticle = (id) => router.push(`/articles/${id}`)
+const handleSearch = () => {}
+
+onMounted(async () => {
   try {
-    const response = await articleAPI.getArticles({
-      search: searchQuery.value,
-      category: category.value,
-      skip: (currentPage.value - 1) * 20,
-      limit: 20
-    })
-    articles.value = response.data
-    total.value = response.data.length
-  } catch (error) {
-    console.error('加载文章失败', error)
+    const res = await api.get('/api/articles')
+    articles.value = res.data
+  } catch (err) {
+    console.error('加载文章失败:', err)
   } finally {
     loading.value = false
   }
-}
-
-const goToArticle = (id) => router.push(`/articles/${id}`)
-const formatDate = (date) => new Date(date).toLocaleDateString('zh-CN')
-
-onMounted(loadArticles)
+})
 </script>
 
 <style scoped>
-.articles {
-  padding-top: 20px;
-}
-
-.filters {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.articles-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.article-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.article-card:hover {
-  transform: translateX(4px);
-}
-
-.article-content h3 {
-  font-size: 18px;
-  margin-bottom: 8px;
-  color: #303133;
-}
-
-.article-excerpt {
-  color: #606266;
+.create-btn {
+  display: inline-block;
+  padding: 14px 28px;
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
   font-size: 14px;
-  line-height: 1.6;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 4px;
+  margin-bottom: 32px;
+  transition: background 0.2s;
 }
 
-.article-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #ebeef5;
+.create-btn:hover {
+  background: var(--accent-hover);
 }
 
-.author {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #606266;
+.articles-grid-full {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
 }
 
-.stats {
-  display: flex;
-  gap: 16px;
-  font-size: 13px;
-  color: #909399;
+@media (max-width: 1024px) {
+  .articles-grid-full {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
+@media (max-width: 768px) {
+  .articles-grid-full {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

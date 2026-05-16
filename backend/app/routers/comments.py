@@ -6,7 +6,7 @@ from ..database import get_db
 from .. import models, schemas
 from ..auth import get_current_user
 
-router = APIRouter(prefix="/api/comments", tags=["评论"])
+router = APIRouter(prefix="/comments", tags=["评论"])
 
 
 @router.get("/article/{article_id}", response_model=List[schemas.CommentDetail])

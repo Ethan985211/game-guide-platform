@@ -11,11 +11,18 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    code: str  # 邮箱验证码
 
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class LoginWithVerifyRequest(BaseModel):
+    email: EmailStr
+    password: str
+    turnstile_token: Optional[str] = None
 
 
 class UserUpdate(BaseModel):
@@ -163,3 +170,113 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     user_id: Optional[int] = None
+
+
+# ============ Email Verification Schemas ============
+class SendVerifyCodeRequest(BaseModel):
+    email: EmailStr
+
+
+class SendRegisterCodeRequest(BaseModel):
+    email: EmailStr
+
+
+class VerifyCodeRequest(BaseModel):
+    email: EmailStr
+    code: str
+
+
+class SendVerifyCodeResponse(BaseModel):
+    message: str
+    expires_in: int = 300  # 验证码有效期（秒）
+
+
+# ============ Password Change Schemas ============
+class PasswordChangeRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+
+class PasswordChangeResponse(BaseModel):
+    message: str
+
+
+# ============ Avatar Upload Schema ============
+class AvatarUploadResponse(BaseModel):
+    message: str
+    avatar_url: str
+
+
+# ============ Admin Schemas ============
+class AdminLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class AdminLoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    is_admin: bool = True
+
+
+class AdminStatsResponse(BaseModel):
+    total_users: int
+    total_games: int
+    total_articles: int
+    total_comments: int
+    total_views: int  # 总浏览量
+    today_views: int  # 今日浏览
+    verified_users: int
+    recent_articles: int  # 最近7天的文章数
+    recent_comments: int  # 最近7天的评论数
+    recent_views: int  # 最近7天的浏览量
+    new_games: int = 0  # 最近7天新增游戏数
+
+
+class UserManagementResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    is_admin: bool
+    is_verified: bool
+    is_active: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ArticleManagementResponse(BaseModel):
+    id: int
+    title: str
+    slug: str
+    category: str
+    views: int
+    likes: int
+    is_published: bool
+    created_at: datetime
+    author_username: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GameManagementResponse(BaseModel):
+    id: int
+    name: str
+    slug: str
+    category: str
+    developer: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ============ OpenClaw API Schemas ============
+class OpenClawRequest(BaseModel):
+    action: str  # search_games, get_articles, post_comment, etc.
+    params: dict = {}
+
+
+class OpenClawResponse(BaseModel):
+    success: bool
+    data: Optional[dict] = None
+    error: Optional[str] = None

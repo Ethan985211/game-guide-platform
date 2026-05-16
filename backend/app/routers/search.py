@@ -6,7 +6,7 @@ from typing import List, Optional
 from ..database import get_db
 from .. import models, schemas
 
-router = APIRouter(prefix="/api/search", tags=["搜索"])
+router = APIRouter(prefix="/search", tags=["搜索"])
 
 
 @router.get("")

@@ -36,12 +36,13 @@ export const characterAPI = {
   getCharacter: (id) => api.get(`/characters/${id}`)
 }
 
-export const commentAPI = {
-  getComments: (articleId) => api.get(`/comments/article/${articleId}`),
-  createComment: (data) => api.post('/comments', data),
-  deleteComment: (id) => api.delete(`/comments/${id}`),
-  likeComment: (id) => api.post(`/comments/${id}/like`)
-}
+// 评论功能已关闭
+// export const commentAPI = {
+//   getComments: (articleId) => api.get(`/comments/article/${articleId}`),
+//   createComment: (data) => api.post('/comments', data),
+//   deleteComment: (id) => api.delete(`/comments/${id}`),
+//   likeComment: (id) => api.post(`/comments/${id}/like`)
+// }
 
 export const searchAPI = {
   search: (q, type) => api.get('/search', { params: { q, type } })

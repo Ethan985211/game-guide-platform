@@ -7,7 +7,7 @@ from ..database import get_db
 from .. import models, schemas
 from ..auth import get_current_user
 
-router = APIRouter(prefix="/api/articles", tags=["文章"])
+router = APIRouter(prefix="/articles", tags=["文章"])
 
 
 @router.get("", response_model=List[schemas.ArticleResponse])

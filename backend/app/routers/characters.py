@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from ..database import get_db
 from .. import models, schemas
 from ..auth import get_current_user
+from .admin import verify_admin_token
 
-router = APIRouter(prefix="/api/characters", tags=["角色"])
+router = APIRouter(prefix="/characters", tags=["角色"])
 
 
 @router.get("", response_model=List[schemas.CharacterResponse])
@@ -59,3 +60,51 @@ def create_character(
     db.commit()
     db.refresh(db_character)
     return db_character
+
+
+@router.put("/{character_id}", response_model=schemas.CharacterResponse)
+def update_character(
+    character_id: int,
+    character_update: schemas.CharacterCreate,
+    x_admin_token: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    """更新角色（管理员专用）"""
+    if not x_admin_token or not verify_admin_token(x_admin_token):
+        raise HTTPException(status_code=403, detail="需要管理员权限")
+
+    db_character = db.query(models.Character).filter(models.Character.id == character_id).first()
+    if not db_character:
+        raise HTTPException(status_code=404, detail="角色不存在")
+
+    # 如果更换了游戏，检查游戏是否存在
+    if character_update.game_id != db_character.game_id:
+        game = db.query(models.Game).filter(models.Game.id == character_update.game_id).first()
+        if not game:
+            raise HTTPException(status_code=404, detail="游戏不存在")
+
+    for key, value in character_update.model_dump().items():
+        setattr(db_character, key, value)
+
+    db.commit()
+    db.refresh(db_character)
+    return db_character
+
+
+@router.delete("/{character_id}")
+def delete_character(
+    character_id: int,
+    x_admin_token: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    """删除角色（管理员专用）"""
+    if not x_admin_token or not verify_admin_token(x_admin_token):
+        raise HTTPException(status_code=403, detail="需要管理员权限")
+
+    db_character = db.query(models.Character).filter(models.Character.id == character_id).first()
+    if not db_character:
+        raise HTTPException(status_code=404, detail="角色不存在")
+
+    db.delete(db_character)
+    db.commit()
+    return {"message": "角色已删除"}

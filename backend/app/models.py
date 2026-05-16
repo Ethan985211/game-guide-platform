@@ -15,6 +15,9 @@ class User(Base):
     bio = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
+    is_verified = Column(Boolean, default=False)  # 邮箱是否已验证
+    verification_code = Column(String(6), nullable=True)  # 验证码
+    verification_expires = Column(DateTime(timezone=True), nullable=True)  # 验证码过期时间
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     articles = relationship("Article", back_populates="author")
@@ -33,6 +36,7 @@ class Game(Base):
     release_date = Column(DateTime, nullable=True)
     developer = Column(String(100))
     publisher = Column(String(100))
+    views = Column(Integer, default=0)  # 游戏页面浏览量
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     characters = relationship("Character", back_populates="game")
@@ -92,3 +96,28 @@ class Comment(Base):
     article = relationship("Article", back_populates="comments")
     author = relationship("User", back_populates="comments")
     parent = relationship("Comment", remote_side=[id], backref="replies")
+
+
+class AdminUser(Base):
+    """管理员用户表"""
+    __tablename__ = "admin_users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), unique=True, index=True)
+    password_hash = Column(String(255))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class PageView(Base):
+    """页面浏览记录表 - 用于追踪真实访问数据"""
+    __tablename__ = "page_views"
+
+    id = Column(Integer, primary_key=True, index=True)
+    path = Column(String(500), index=True)  # 页面路径
+    referrer = Column(String(500), nullable=True)  # 来源页面
+    user_agent = Column(String(500), nullable=True)  # 用户代理
+    ip_hash = Column(String(64), nullable=True)  # IP哈希（用于去重，不存储真实IP）
+    session_id = Column(String(64), index=True)  # 会话ID
+    content_type = Column(String(50), nullable=True)  # 内容类型: game, article, home
+    content_id = Column(Integer, nullable=True)  # 内容ID
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)

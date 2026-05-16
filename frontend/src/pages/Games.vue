@@ -1,52 +1,47 @@
 <template>
-  <div class="games page-container">
-    <h1 class="page-title">游戏库</h1>
-
-    <!-- 筛选 -->
-    <div class="filters">
-      <el-input
-        v-model="searchQuery"
-        placeholder="搜索游戏..."
-        clearable
-        style="width: 300px"
-        @change="loadGames"
-      />
-      <el-select v-model="category" placeholder="游戏类型" clearable @change="loadGames">
-        <el-option label="RPG" value="RPG" />
-        <el-option label="FPS" value="FPS" />
-        <el-option label="MOBA" value="MOBA" />
-        <el-option label="SLG" value="SLG" />
-        <el-option label="休闲" value="休闲" />
-      </el-select>
+  <div class="games-page page">
+    <div class="page-header">
+      <h1 class="page-title">游戏库</h1>
+      <p class="page-subtitle">发现你喜欢的游戏</p>
     </div>
 
-    <!-- 游戏列表 -->
-    <div class="card-grid">
-      <div v-for="game in games" :key="game.id" class="game-card" @click="goToGame(game.id)">
-        <img :src="game.cover_image || '/placeholder.png'" :alt="game.name">
-        <div class="game-card-content">
-          <div class="game-card-title">{{ game.name }}</div>
-          <div class="game-card-meta">
-            <el-tag size="small">{{ game.category }}</el-tag>
-            <span class="developer">{{ game.developer }}</span>
-          </div>
-          <div class="game-card-desc">{{ game.description }}</div>
+    <div class="search-bar">
+      <input 
+        v-model="searchQuery" 
+        type="text" 
+        placeholder="搜索游戏..."
+        @keyup.enter="loadGames"
+      >
+      <button @click="loadGames">搜索</button>
+    </div>
+
+    <div v-if="loading" class="loading">
+      <div class="loading-spinner"></div>
+    </div>
+
+    <div v-else-if="games.length === 0" class="empty-state">
+      <h3>暂无游戏</h3>
+      <p>游戏库正在更新中</p>
+    </div>
+
+    <div v-else class="games-grid-full">
+      <div 
+        v-for="game in games" 
+        :key="game.id" 
+        class="article-card"
+        @click="goToGame(game.id)"
+      >
+        <div class="article-image">
+          <img :src="game.cover_image || 'https://picsum.photos/640/400?random=' + game.id" :alt="game.name">
+        </div>
+        <span class="article-tag">{{ game.category }}</span>
+        <h3>{{ game.name }}</h3>
+        <p>{{ game.description }}</p>
+        <div class="article-meta">
+          <span>{{ game.developer }}</span>
         </div>
       </div>
     </div>
-
-    <!-- 分页 -->
-    <div class="pagination">
-      <el-pagination
-        v-model:current-page="currentPage"
-        :page-size="20"
-        :total="total"
-        layout="prev, pager, next"
-        @current-change="loadGames"
-      />
-    </div>
-
-    <el-empty v-if="!games.length && !loading" description="暂无游戏" />
   </div>
 </template>
 
@@ -58,9 +53,6 @@ import { gameAPI } from '../api'
 const router = useRouter()
 const games = ref([])
 const searchQuery = ref('')
-const category = ref('')
-const currentPage = ref(1)
-const total = ref(0)
 const loading = ref(false)
 
 const loadGames = async () => {
@@ -68,12 +60,10 @@ const loadGames = async () => {
   try {
     const response = await gameAPI.getGames({
       search: searchQuery.value,
-      category: category.value,
-      skip: (currentPage.value - 1) * 20,
-      limit: 20
+      skip: 0,
+      limit: 30
     })
     games.value = response.data
-    total.value = response.data.length
   } catch (error) {
     console.error('加载游戏失败', error)
   } finally {
@@ -87,31 +77,27 @@ onMounted(loadGames)
 </script>
 
 <style scoped>
-.games {
-  padding-top: 20px;
+.games-grid-full {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
 }
 
-.filters {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
+@media (max-width: 1200px) {
+  .games-grid-full {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-.game-card-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+@media (max-width: 1024px) {
+  .games-grid-full {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.developer {
-  font-size: 12px;
-  color: #909399;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
+@media (max-width: 768px) {
+  .games-grid-full {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

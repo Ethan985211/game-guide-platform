@@ -7,7 +7,7 @@ from ..database import get_db
 from .. import models, schemas
 from ..auth import get_current_user
 
-router = APIRouter(prefix="/api/games", tags=["游戏"])
+router = APIRouter(prefix="/games", tags=["游戏"])
 
 
 @router.get("", response_model=List[schemas.GameResponse])
@@ -39,6 +39,11 @@ def get_game(game_id: int, db: Session = Depends(get_db)):
     game = db.query(models.Game).filter(models.Game.id == game_id).first()
     if not game:
         raise HTTPException(status_code=404, detail="游戏不存在")
+    
+    # 增加游戏浏览量
+    game.views += 1
+    db.commit()
+    
     return game
 
 

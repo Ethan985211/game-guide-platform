@@ -1,45 +1,46 @@
 <template>
   <div class="game-detail page-container" v-if="game">
-    <!-- 游戏信息 -->
     <div class="game-header">
       <img :src="game.cover_image || '/placeholder.png'" class="cover">
       <div class="info">
         <h1>{{ game.name }}</h1>
         <div class="meta">
-          <el-tag>{{ game.category }}</el-tag>
-          <span>开发商: {{ game.developer }}</span>
-          <span>发行商: {{ game.publisher }}</span>
+          <el-tag type="warning">{{ game.category }}</el-tag>
+          <span>{{ game.developer }}</span>
+          <span>{{ game.publisher }}</span>
         </div>
         <p class="description">{{ game.description }}</p>
       </div>
     </div>
 
-    <!-- 角色列表 -->
     <section class="section" v-if="characters.length">
-      <h2>角色图鉴</h2>
+      <div class="section-header">
+        <h2>角色图鉴</h2>
+      </div>
       <div class="card-grid">
         <div v-for="char in characters" :key="char.id" class="character-card">
           <img :src="char.image || '/placeholder.png'" :alt="char.name">
           <div class="char-info">
             <div class="char-name">{{ char.name }}</div>
             <div class="char-tags">
-              <el-tag v-if="char.element" size="small">{{ char.element }}</el-tag>
-              <el-tag v-if="char.weapon_type" size="small" type="info">{{ char.weapon_type }}</el-tag>
+              <el-tag v-if="char.element" size="small" type="warning">{{ char.element }}</el-tag>
+              <el-tag v-if="char.weapon_type" size="small">{{ char.weapon_type }}</el-tag>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 相关攻略 -->
     <section class="section">
-      <h2>相关攻略</h2>
+      <div class="section-header">
+        <h2>相关攻略</h2>
+      </div>
       <div class="articles-list">
         <div v-for="article in articles" :key="article.id" class="article-card" @click="goToArticle(article.id)">
           <div class="article-card-title">{{ article.title }}</div>
           <div class="article-card-meta">
-            <span>浏览 {{ article.views }}</span>
-            <span>点赞 {{ article.likes }}</span>
+            <span>{{ article.views }} 阅读</span>
+            <span>{{ article.likes }} 点赞</span>
           </div>
         </div>
       </div>
@@ -47,7 +48,7 @@
     </section>
   </div>
 
-  <el-skeleton v-else-if="loading" />
+  <el-skeleton v-else-if="loading" animated />
   <el-empty v-else description="游戏不存在" />
 </template>
 
@@ -55,6 +56,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { gameAPI, articleAPI } from '../api'
+import analytics from '../utils/analytics'
 
 const route = useRoute()
 const router = useRouter()
@@ -75,6 +77,9 @@ const loadData = async () => {
     game.value = gameRes.data
     characters.value = charRes.data
     articles.value = articleRes.data
+    
+    // 记录游戏页面浏览量
+    analytics.recordContentView('game', gameId)
   } catch (error) {
     console.error('加载失败', error)
   } finally {
@@ -88,77 +93,6 @@ onMounted(loadData)
 </script>
 
 <style scoped>
-.game-header {
-  display: flex;
-  gap: 24px;
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  margin-bottom: 32px;
-}
-
-.cover {
-  width: 280px;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.info h1 {
-  font-size: 28px;
-  margin-bottom: 12px;
-}
-
-.meta {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  margin-bottom: 16px;
-  color: #606266;
-}
-
-.description {
-  color: #606266;
-  line-height: 1.6;
-}
-
-.section {
-  margin-bottom: 32px;
-}
-
-.section h2 {
-  font-size: 20px;
-  margin-bottom: 16px;
-}
-
-.character-card {
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  text-align: center;
-}
-
-.character-card img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-}
-
-.char-info {
-  padding: 12px;
-}
-
-.char-name {
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.char-tags {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-}
-
 .articles-list {
   display: flex;
   flex-direction: column;

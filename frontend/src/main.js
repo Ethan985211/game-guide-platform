@@ -8,6 +8,9 @@ import './assets/main.css'
 
 const app = createApp(App)
 
+// 将 router 暴露到全局，以便 analytics 服务使用
+window.router = router
+
 app.use(createPinia())
 app.use(router)
 app.use(ElementPlus)

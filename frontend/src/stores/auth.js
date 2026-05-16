@@ -12,11 +12,19 @@ export const useAuthStore = defineStore('auth', {
   }),
 
   getters: {
-    isLoggedIn: (state) => !!state.token
+    isLoggedIn: (state) => !!state.token && !!state.user
   },
 
   actions: {
+    async initAuth() {
+      // 应用启动时初始化认证状态
+      if (this.token) {
+        await this.fetchUser()
+      }
+    },
+    
     async login(email, password) {
+      // 使用标准 OAuth2 登录
       const formData = new FormData()
       formData.append('username', email)
       formData.append('password', password)
