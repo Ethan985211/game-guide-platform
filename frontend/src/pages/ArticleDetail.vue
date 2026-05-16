@@ -189,14 +189,147 @@ const formatNum = (n) => {
   return n
 }
 
+const markdownToHtml = (md) => {
+  if (!md) return ''
+
+  // Split into blocks (paragraphs separated by blank lines)
+  const blocks = md.split(/\n\n+/)
+  const result = []
+
+  for (let block of blocks) {
+    block = block.trim()
+    if (!block) continue
+
+    const lines = block.split('\n')
+
+    // Check for code blocks ``` ... ```
+    if (lines[0].startsWith('```')) {
+      const lang = lines[0].slice(3).trim()
+      const codeLines = []
+      let i = 1
+      for (; i < lines.length; i++) {
+        if (lines[i].startsWith('```')) break
+        codeLines.push(lines[i])
+      }
+      const escaped = codeLines.join('\n').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      result.push(`<pre class="md-code"><code${lang ? ` class="language-${lang}"` : ''}>${escaped}</code></pre>`)
+      continue
+    }
+
+    // Tables: lines where first line has at least 2 | chars and second line has |---|---| pattern
+    if (lines.length >= 2 && lines[0].includes('|') && lines[1].match(/^\|[\s\-:|]+\|/)) {
+      const headerCells = lines[0].split('|').filter(c => c.trim())
+      const rows = []
+      for (let j = 2; j < lines.length; j++) {
+        if (lines[j].includes('|')) {
+          const cells = lines[j].split('|').filter(c => c.trim())
+          const cellHtml = cells.map(c => `<td>${inlineFormat(c.trim())}</td>`).join('')
+          rows.push(`<tr>${cellHtml}</tr>`)
+        } else {
+          break
+        }
+      }
+      const headerHtml = headerCells.map(h => `<th>${inlineFormat(h.trim())}</th>`).join('')
+      result.push(`<div class="md-table-wrap"><table class="md-table"><thead><tr>${headerHtml}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`)
+      continue
+    }
+
+    // Blockquotes (> text)
+    if (lines[0].startsWith('>')) {
+      const quote = lines.map(l => l.replace(/^>\s?/, '')).join('\n')
+      result.push(`<blockquote class="md-blockquote">${inlineFormat(quote)}</blockquote>`)
+      continue
+    }
+
+    // Horizontal rules (--- or ***)
+    if (block === '---' || block === '***' || block === '***---' || block.match(/^[-*]{3,}$/)) {
+      result.push('<hr class="md-hr" />')
+      continue
+    }
+
+    // Unordered lists (- item or * item)
+    if (lines.every(l => l.match(/^[-*]\s/) || l.match(/^\s{2,}[-*]\s/))) {
+      const listItems = processListItems(lines)
+      result.push(`<ul class="md-ul">${listItems}</ul>`)
+      continue
+    }
+
+    // Ordered lists (1. item)
+    if (lines.every(l => l.match(/^\d+\.\s/) || l.match(/^\s{2,}\d+\.\s/))) {
+      const listItems = processListItems(lines, true)
+      result.push(`<ol class="md-ol">${listItems}</ol>`)
+      continue
+    }
+
+    // Headers
+    const headerMatch = block.match(/^(#{1,4})\s+(.+)$/m)
+    if (headerMatch && lines.length === 1) {
+      const level = headerMatch[1].length
+      const text = inlineFormat(headerMatch[2])
+      result.push(`<h${level} class="md-h md-h${level}">${text}</h${level}>`)
+      continue
+    }
+
+    // Regular paragraph
+    let content = block
+    content = content.replace(/\n/g, '<br>')
+    content = inlineFormat(content)
+    result.push(`<p class="md-p">${content}</p>`)
+  }
+
+  return result.join('\n')
+}
+
+// Process list items recursively (handles single-level nesting)
+const processListItems = (lines, ordered = false) => {
+  const items = []
+  let i = 0
+  while (i < lines.length) {
+    const line = lines[i]
+    const prefixMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)/)
+    if (!prefixMatch) { i++; continue }
+    const indent = prefixMatch[1].length
+    const content = inlineFormat(prefixMatch[3])
+
+    // Check for nested sub-items (next lines indented deeper)
+    const subLines = []
+    let j = i + 1
+    while (j < lines.length) {
+      const subMatch = lines[j].match(/^(\s*)([-*]|\d+\.)\s+(.*)/)
+      if (subMatch && subMatch[1].length > indent) {
+        subLines.push(lines[j])
+        j++
+      } else if (lines[j].match(/^\s{2,}/) && !lines[j].match(/^(\s*)([-*]|\d+\.)\s/)) {
+        // Continuation line for the current item
+        break
+      } else {
+        break
+      }
+    }
+
+    if (subLines.length > 0) {
+      const subHtml = processListItems(subLines, ordered)
+      items.push(`<li>${content}${subHtml}</li>`)
+      i = j
+    } else {
+      items.push(`<li>${content}</li>`)
+      i++
+    }
+  }
+  return items.join('')
+}
+
+// Inline formatting: bold, italic, code, links
+const inlineFormat = (text) => {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code class="md-inline-code">$1</code>')
+}
+
 const formattedContent = computed(() => {
   if (!article.value?.content) return ''
-  return article.value.content
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>')
-    .replace(/^/, '<p>')
-    .replace(/$/, '</p>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  return markdownToHtml(article.value.content)
 })
 
 const onImgError = (e) => {
@@ -508,21 +641,150 @@ onUnmounted(() => {
   letter-spacing: 1px;
 }
 
-/* ============ 正文 ============ */
+/* ============ 正文 Markdown ============ */
 .article-content {
-  line-height: 2;
+  line-height: 1.9;
   font-size: 17px;
   color: var(--text-secondary);
   margin-bottom: 40px;
 }
 
-.article-content :deep(p) {
-  margin-bottom: 1.6em;
+/* 标题层级 */
+.article-content :deep(.md-h) {
+  color: var(--text-primary);
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 2em 0 0.6em;
+  letter-spacing: -1px;
+}
+.article-content :deep(.md-h1) {
+  font-size: 32px;
+  border-bottom: 2px solid var(--border-color, #e8e8e8);
+  padding-bottom: 16px;
+  margin-top: 1em;
+}
+.article-content :deep(.md-h2) {
+  font-size: 26px;
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
+  padding-bottom: 12px;
+}
+.article-content :deep(.md-h3) {
+  font-size: 21px;
+}
+.article-content :deep(.md-h4) {
+  font-size: 18px;
+  color: var(--text-muted);
 }
 
+/* 段落 */
+.article-content :deep(.md-p) {
+  margin-bottom: 1.5em;
+}
+
+/* 粗体 / 斜体 */
 .article-content :deep(strong) {
   color: var(--text-primary);
   font-weight: 700;
+}
+.article-content :deep(em) {
+  color: var(--accent);
+  font-style: italic;
+}
+
+/* 无序列表 */
+.article-content :deep(.md-ul),
+.article-content :deep(.md-ol) {
+  margin: 1em 0 1.5em;
+  padding-left: 1.5em;
+}
+.article-content :deep(.md-ul li),
+.article-content :deep(.md-ol li) {
+  margin-bottom: 0.5em;
+  line-height: 1.8;
+}
+.article-content :deep(.md-ul) {
+  list-style: disc;
+}
+.article-content :deep(.md-ul ul) {
+  list-style: circle;
+}
+
+/* 引用块 */
+.article-content :deep(.md-blockquote) {
+  border-left: 4px solid var(--accent);
+  background: var(--bg-secondary, #f8f8f8);
+  padding: 16px 24px;
+  margin: 1.5em 0;
+  border-radius: 0 8px 8px 0;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+/* 表格 */
+.article-content :deep(.md-table-wrap) {
+  overflow-x: auto;
+  margin: 1.5em 0;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #e8e8e8);
+}
+.article-content :deep(.md-table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.article-content :deep(.md-table th) {
+  background: var(--bg-secondary, #f5f5f5);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: left;
+  padding: 12px 18px;
+  border-bottom: 2px solid var(--border-color, #ddd);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.article-content :deep(.md-table td) {
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border-color, #eee);
+  color: var(--text-secondary);
+}
+.article-content :deep(.md-table tr:last-child td) {
+  border-bottom: none;
+}
+
+/* 水平线 */
+.article-content :deep(.md-hr) {
+  border: none;
+  height: 1px;
+  background: var(--border-color, #e8e8e8);
+  margin: 2.5em 0;
+}
+
+/* 内联代码 */
+.article-content :deep(.md-inline-code) {
+  background: var(--bg-secondary, #f0f0f0);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  color: #e65100;
+}
+
+/* 代码块 */
+.article-content :deep(.md-code) {
+  display: block;
+  background: var(--bg-dark, #1a1a2e);
+  color: #e0e0e0;
+  padding: 20px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.7;
+  overflow-x: auto;
+  margin: 1.5em 0;
+}
+.article-content :deep(.md-code code) {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
 }
 
 /* ============ 标签 ============ */
