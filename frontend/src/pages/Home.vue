@@ -10,7 +10,7 @@
         <p>最全的游戏攻略，最深的角色解析，最热的社区讨论</p>
         <div class="hero-buttons">
           <router-link to="/games"><button class="btn-explore">探索游戏</button></router-link>
-          <router-link to="/register"><button class="btn-join">加入社区</button></router-link>
+          <router-link v-if="!isLoggedIn" to="/register"><button class="btn-join">加入社区</button></router-link>
         </div>
       </div>
     </section>
@@ -94,6 +94,7 @@ import GlassWipe from '../components/GlassWipe.vue'
 const router = useRouter()
 const games = ref([])
 const articles = ref([])
+const isLoggedIn = ref(!!localStorage.getItem('token'))
 const heroMouseX = ref(-1000)
 const heroMouseY = ref(-1000)
 const globalMouseX = ref(0)
