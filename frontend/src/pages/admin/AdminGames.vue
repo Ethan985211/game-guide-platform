@@ -25,9 +25,9 @@
           <el-icon><Document /></el-icon>
           文章管理
         </router-link>
-        <router-link to="/admin/openclaw" active-class="active">
+        <router-link to="/admin/hermes" active-class="active">
           <el-icon><Connection /></el-icon>
-          OpenClaw
+          Hermes Agent
         </router-link>
       </nav>
       <div class="sidebar-footer">

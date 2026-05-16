@@ -25,9 +25,9 @@
           <el-icon><Document /></el-icon>
           文章管理
         </router-link>
-        <router-link to="/admin/openclaw" active-class="active">
+        <router-link to="/admin/hermes" active-class="active">
           <el-icon><Connection /></el-icon>
-          OpenClaw
+          Hermes Agent
         </router-link>
       </nav>
       <div class="sidebar-footer">
@@ -40,7 +40,7 @@
 
     <main class="admin-main">
       <div class="admin-content">
-        <h1 class="page-title">OpenClaw 智能体</h1>
+        <h1 class="page-title">Hermes Agent 智能体</h1>
 
         <!-- 状态卡片 -->
         <div class="status-card">
@@ -49,8 +49,8 @@
             <span class="status-text">服务在线</span>
           </div>
           <div class="status-info">
-            <p>Game Guide Platform OpenClaw Integration</p>
-            <p class="version">Version 1.0.0</p>
+            <p>Game Guide Platform — Hermes Agent</p>
+            <p class="version">Version 2.0.0</p>
           </div>
         </div>
 
@@ -60,7 +60,7 @@
           <div class="config-card">
             <div class="config-item">
               <label>API 端点</label>
-              <code>{{ apiBaseUrl }}/openclaw</code>
+              <code>{{ apiBaseUrl }}/hermes</code>
             </div>
             <div class="config-item">
               <label>API 密钥</label>
@@ -82,42 +82,42 @@
             <div class="feature-card">
               <el-icon class="feature-icon"><Search /></el-icon>
               <h3>搜索游戏</h3>
-              <p>GET /openclaw/games/search?q={keyword}</p>
+              <p>GET /hermes/games/search?q={keyword}</p>
             </div>
             <div class="feature-card">
               <el-icon class="feature-icon"><InfoFilled /></el-icon>
               <h3>游戏详情</h3>
-              <p>GET /openclaw/games/{id}</p>
+              <p>GET /hermes/games/{id}</p>
             </div>
             <div class="feature-card">
               <el-icon class="feature-icon"><User /></el-icon>
               <h3>游戏角色</h3>
-              <p>GET /openclaw/games/{id}/characters</p>
+              <p>GET /hermes/games/{id}/characters</p>
             </div>
             <div class="feature-card">
               <el-icon class="feature-icon"><Document /></el-icon>
               <h3>搜索文章</h3>
-              <p>GET /openclaw/articles/search?q={keyword}</p>
+              <p>GET /hermes/articles/search?q={keyword}</p>
             </div>
             <div class="feature-card">
               <el-icon class="feature-icon"><Reading /></el-icon>
               <h3>文章详情</h3>
-              <p>GET /openclaw/articles/{id}</p>
+              <p>GET /hermes/articles/{id}</p>
             </div>
             <div class="feature-card">
               <el-icon class="feature-icon"><ChatLineSquare /></el-icon>
               <h3>发表评论</h3>
-              <p>POST /openclaw/comments</p>
+              <p>POST /hermes/comments</p>
             </div>
             <div class="feature-card">
               <el-icon class="feature-icon"><DataAnalysis /></el-icon>
               <h3>平台统计</h3>
-              <p>GET /openclaw/stats</p>
+              <p>GET /hermes/stats</p>
             </div>
             <div class="feature-card">
               <el-icon class="feature-icon"><Cpu /></el-icon>
               <h3>AI查询</h3>
-              <p>POST /openclaw/query</p>
+              <p>POST /hermes/query</p>
             </div>
           </div>
         </div>
@@ -127,12 +127,12 @@
           <h2>使用示例</h2>
           <div class="example-card">
             <h3>cURL 示例</h3>
-            <pre class="code-block">curl -X GET "{{ apiBaseUrl }}/openclaw/games/search?q=原神" \
+            <pre class="code-block">curl -X GET "{{ apiBaseUrl }}/hermes/games/search?q=原神" \
   -H "X-API-Key: {{ apiKey }}"</pre>
           </div>
           <div class="example-card">
             <h3>JavaScript 示例</h3>
-            <pre class="code-block">const response = await fetch('{{ apiBaseUrl }}/openclaw/stats', {
+            <pre class="code-block">const response = await fetch('{{ apiBaseUrl }}/hermes/stats', {
   headers: {
     'X-API-Key': '{{ apiKey }}'
   }
@@ -178,7 +178,7 @@ const router = useRouter()
 const adminStore = useAdminStore()
 
 const showKey = ref(false)
-const apiBaseUrl = ref(window.location.origin.replace(':5173', ':8000'))
+const apiBaseUrl = ref(window.location.origin + '/api')
 const apiKey = ref('')
 
 onMounted(() => {
@@ -187,7 +187,7 @@ onMounted(() => {
     return
   }
   // 从本地存储获取（实际使用时应该从后端获取）
-  apiKey.value = 'openclaw_secret_key_2024'
+  apiKey.value = 'hm-agent-key-gqp-2026'
 })
 
 const handleLogout = () => {

@@ -72,6 +72,20 @@ app.include_router(articles.router)
 app.include_router(search.router)
 app.include_router(admin.router)
 app.include_router(openclaw.router)
+
+# 向后兼容：旧 /openclaw 路径重定向到 /hermes
+from fastapi import APIRouter
+from starlette.responses import RedirectResponse
+
+async def _redirect_openclaw(request: Request):
+    new_path = request.url.path.replace("/openclaw/", "/hermes/", 1)
+    qs = f"?{request.url.query}" if request.url.query else ""
+    return RedirectResponse(url=new_path + qs, status_code=308)
+
+_compat_router = APIRouter(prefix="/openclaw")
+_compat_router.add_api_route("/{path:path}", _redirect_openclaw, methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+app.include_router(_compat_router)
+
 app.include_router(analytics.router)
 
 

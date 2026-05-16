@@ -179,38 +179,45 @@ def require_admin(token: str = Depends(oauth2_scheme), db: Session = Depends(get
     return user
 
 
-# ============ OpenClaw API Key Authentication ============
+# ============ Hermes Agent API Key Authentication ============
 
-OPENCLAW_API_KEY = os.getenv("OPENCLAW_API_KEY", "")
-OPENCLAW_API_SECRET = os.getenv("OPENCLAW_API_SECRET", "")
+HERMES_API_KEY = os.getenv("HERMES_API_KEY", os.getenv("OPENCLAW_API_KEY", ""))
 
 
-def verify_openclaw_api_key(api_key: str) -> bool:
-    """验证OpenClaw API密钥"""
-    if not OPENCLAW_API_KEY:
+def verify_hermes_api_key(api_key: str) -> bool:
+    """验证Hermes Agent API密钥"""
+    if not HERMES_API_KEY:
         return False
-    return api_key == OPENCLAW_API_KEY
+    return api_key == HERMES_API_KEY
 
 
-def get_openclaw_user(db: Session = Depends(get_db)) -> Optional[models.User]:
-    """获取OpenClaw专用系统用户（用于AI操作）"""
-    openclaw_user = db.query(models.User).filter(
-        models.User.email == "openclaw@system.local"
+# 向后兼容别名
+verify_openclaw_api_key = verify_hermes_api_key
+
+
+def get_hermes_user(db: Session = Depends(get_db)) -> Optional[models.User]:
+    """获取Hermes Agent专用系统用户（用于AI操作）"""
+    hermes_user = db.query(models.User).filter(
+        models.User.email == "hermes@system.local"
     ).first()
 
     # 如果不存在，创建一个
-    if not openclaw_user:
-        openclaw_user = models.User(
-            username="OpenClaw Agent",
-            email="openclaw@system.local",
-            hashed_password=get_password_hash("openclaw-system-only"),
+    if not hermes_user:
+        hermes_user = models.User(
+            username="Hermes Agent",
+            email="hermes@system.local",
+            hashed_password=get_password_hash("hermes-system-only"),
             is_admin=True,
             is_active=True,
             is_verified=True,
-            bio="AI智能体系统账号"
+            bio="Hermes AI智能体系统账号"
         )
-        db.add(openclaw_user)
+        db.add(hermes_user)
         db.commit()
-        db.refresh(openclaw_user)
+        db.refresh(hermes_user)
 
-    return openclaw_user
+    return hermes_user
+
+
+# 向后兼容别名
+get_openclaw_user = get_hermes_user

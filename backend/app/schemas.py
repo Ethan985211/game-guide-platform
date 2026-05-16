@@ -270,16 +270,21 @@ class GameManagementResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ============ OpenClaw API Schemas ============
-class OpenClawRequest(BaseModel):
+# ============ Hermes Agent API Schemas ============
+class HermesAgentRequest(BaseModel):
     action: str  # search_games, get_articles, post_comment, etc.
     params: dict = {}
 
 
-class OpenClawResponse(BaseModel):
+class HermesAgentResponse(BaseModel):
     success: bool
     data: Optional[dict] = None
     error: Optional[str] = None
+
+
+# 向后兼容别名
+OpenClawRequest = HermesAgentRequest
+OpenClawResponse = HermesAgentResponse
 
 
 # ============ Generic Pagination ============

@@ -1,5 +1,5 @@
 """
-OpenClaw 智能体 API 路由
+Hermes Agent 智能体 API 路由
 为AI智能体提供游戏攻略平台数据访问接口
 """
 from fastapi import APIRouter, Depends, HTTPException, Header
@@ -9,25 +9,25 @@ from typing import Optional
 from ..database import get_db
 from .. import models, schemas
 from ..auth import (
-    verify_openclaw_api_key,
-    get_openclaw_user,
+    verify_hermes_api_key,
+    get_hermes_user,
 )
 
-router = APIRouter(prefix="/openclaw", tags=["OpenClaw智能体"])
+router = APIRouter(prefix="/hermes", tags=["Hermes Agent"])
 
 
-def require_openclaw_api_key(
+def require_hermes_api_key(
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
     db: Session = Depends(get_db)
 ):
-    """验证OpenClaw API密钥"""
+    """验证Hermes Agent API密钥"""
     if not x_api_key:
         raise HTTPException(
             status_code=401,
             detail="缺少API密钥，请提供 X-API-Key"
         )
 
-    if not verify_openclaw_api_key(x_api_key):
+    if not verify_hermes_api_key(x_api_key):
         raise HTTPException(
             status_code=401,
             detail="API密钥无效"
@@ -36,23 +36,24 @@ def require_openclaw_api_key(
     return x_api_key
 
 
-def get_openclaw_db_user(db: Session = Depends(get_db)):
-    """获取OpenClaw系统用户"""
-    return get_openclaw_user(db)
+def get_hermes_db_user(db: Session = Depends(get_db)):
+    """获取Hermes Agent系统用户"""
+    return get_hermes_user(db)
 
 
 # ============ 智能体状态 ============
 
 @router.get("/status")
-def get_openclaw_status(
-    api_key: str = Depends(require_openclaw_api_key),
+def get_hermes_status(
+    api_key: str = Depends(require_hermes_api_key),
     db: Session = Depends(get_db)
 ):
-    """获取OpenClaw智能体状态"""
+    """获取Hermes Agent状态"""
     return {
         "status": "online",
         "service": "Game Guide Platform",
-        "version": "1.0.0",
+        "agent": "Hermes Agent",
+        "version": "2.0.0",
         "capabilities": [
             "search_games",
             "get_game_details",
@@ -71,7 +72,7 @@ def get_openclaw_status(
 def search_games(
     q: str,
     limit: int = 10,
-    api_key: str = Depends(require_openclaw_api_key),
+    api_key: str = Depends(require_hermes_api_key),
     db: Session = Depends(get_db)
 ):
     """搜索游戏"""
@@ -103,7 +104,7 @@ def search_games(
 @router.get("/games/{game_id}")
 def get_game_details(
     game_id: int,
-    api_key: str = Depends(require_openclaw_api_key),
+    api_key: str = Depends(require_hermes_api_key),
     db: Session = Depends(get_db)
 ):
     """获取游戏详情"""
@@ -146,7 +147,7 @@ def get_game_details(
 def get_game_characters(
     game_id: int,
     limit: int = 20,
-    api_key: str = Depends(require_openclaw_api_key),
+    api_key: str = Depends(require_hermes_api_key),
     db: Session = Depends(get_db)
 ):
     """获取游戏角色列表"""
@@ -181,7 +182,7 @@ def search_articles(
     game_id: Optional[int] = None,
     category: Optional[str] = None,
     limit: int = 10,
-    api_key: str = Depends(require_openclaw_api_key),
+    api_key: str = Depends(require_hermes_api_key),
     db: Session = Depends(get_db)
 ):
     """搜索文章"""
@@ -224,7 +225,7 @@ def search_articles(
 @router.get("/articles/{article_id}")
 def get_article_details(
     article_id: int,
-    api_key: str = Depends(require_openclaw_api_key),
+    api_key: str = Depends(require_hermes_api_key),
     db: Session = Depends(get_db)
 ):
     """获取文章详情"""
@@ -280,7 +281,7 @@ def get_article_details(
 @router.get("/articles/{article_id}/comments")
 def get_article_comments(
     article_id: int,
-    api_key: str = Depends(require_openclaw_api_key),
+    api_key: str = Depends(require_hermes_api_key),
     db: Session = Depends(get_db)
 ):
     """获取文章评论"""
@@ -316,8 +317,8 @@ def get_article_comments(
 @router.post("/comments")
 def create_comment(
     comment: schemas.CommentCreate,
-    api_key: str = Depends(require_openclaw_api_key),
-    db_user = Depends(get_openclaw_db_user),
+    api_key: str = Depends(require_hermes_api_key),
+    db_user = Depends(get_hermes_db_user),
     db: Session = Depends(get_db)
 ):
     """创建评论（智能体专用）"""
@@ -353,7 +354,7 @@ def create_comment(
 
 @router.get("/stats")
 def get_platform_stats(
-    api_key: str = Depends(require_openclaw_api_key),
+    api_key: str = Depends(require_hermes_api_key),
     db: Session = Depends(get_db)
 ):
     """获取平台统计数据"""
@@ -419,8 +420,8 @@ def get_platform_stats(
 
 @router.post("/query")
 def ai_query(
-    query_request: schemas.OpenClawRequest,
-    api_key: str = Depends(require_openclaw_api_key),
+    query_request: schemas.HermesAgentRequest,
+    api_key: str = Depends(require_hermes_api_key),
     db: Session = Depends(get_db)
 ):
     """AI智能体查询接口"""

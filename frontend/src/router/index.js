@@ -87,10 +87,15 @@ const routes = [
     meta: { requiresAdmin: true }
   },
   {
-    path: '/admin/openclaw',
-    name: 'AdminOpenClaw',
+    path: '/admin/hermes',
+    name: 'AdminHermes',
     component: () => import('../pages/admin/AdminOpenClaw.vue'),
     meta: { requiresAdmin: true }
+  },
+  // 向后兼容旧路由
+  {
+    path: '/admin/openclaw',
+    redirect: '/admin/hermes'
   },
   // 404 - 必须放在最后
   {
