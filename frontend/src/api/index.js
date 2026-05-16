@@ -7,13 +7,28 @@ const api = axios.create({
   }
 })
 
-// 添加请求拦截器，自动携带token
+// 请求拦截器：自动携带token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
+})
+
+// 响应拦截器：自动解包分页数据 {items, total, ...} -> items[]
+// 非分页响应（无 items 字段）原样透传
+api.interceptors.response.use((response) => {
+  if (response.data && Array.isArray(response.data.items)) {
+    response.data = response.data.items
+  }
+  return response
+}, (error) => {
+  // 429 限流时友好提示，不污染控制台
+  if (error.response?.status === 429) {
+    error.handled = true
+  }
+  return Promise.reject(error)
 })
 
 export const gameAPI = {
