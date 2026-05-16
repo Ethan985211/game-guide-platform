@@ -1,3 +1,4 @@
+import math
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, desc
@@ -10,7 +11,7 @@ from ..auth import get_current_user
 router = APIRouter(prefix="/articles", tags=["文章"])
 
 
-@router.get("", response_model=List[schemas.ArticleResponse])
+@router.get("", response_model=schemas.PaginatedResponse[schemas.ArticleResponse])
 def get_articles(
     game_id: Optional[int] = None,
     category: Optional[str] = None,
@@ -36,10 +37,22 @@ def get_articles(
             )
         )
 
-    return query.options(
+    total = query.count()
+    items = query.options(
         joinedload(models.Article.author),
         joinedload(models.Article.game)
     ).order_by(desc(models.Article.created_at)).offset(skip).limit(limit).all()
+    
+    total_pages = math.ceil(total / limit) if total > 0 else 0
+    page = skip // limit + 1 if limit > 0 else 1
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": limit,
+        "total_pages": total_pages,
+    }
 
 
 @router.get("/{article_id}", response_model=schemas.ArticleDetail)
@@ -56,10 +69,7 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
     if not article:
         raise HTTPException(status_code=404, detail="文章不存在")
 
-    # 增加浏览量
-    article.views += 1
-    db.commit()
-
+    # 浏览量由前端调用 /api/analytics/track 统一记录
     return article
 
 
@@ -69,7 +79,6 @@ def create_article(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # 检查slug唯一性
     existing = db.query(models.Article).filter(models.Article.slug == article.slug).first()
     if existing:
         raise HTTPException(status_code=400, detail="文章slug已存在")
@@ -95,7 +104,6 @@ def update_article(
     if not db_article:
         raise HTTPException(status_code=404, detail="文章不存在")
 
-    # 检查权限：作者或管理员
     if db_article.author_id != current_user.id and not current_user.is_admin:
         raise HTTPException(status_code=403, detail="没有权限修改此文章")
 

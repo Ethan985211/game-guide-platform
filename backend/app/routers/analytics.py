@@ -29,10 +29,8 @@ def get_client_ip(request: Request) -> str:
 
 
 @router.post("/track")
-def track_page_view(
+async def track_page_view(
     request: Request,
-    content_type: str = None,
-    content_id: int = None,
     db: Session = Depends(get_db)
 ):
     """
@@ -41,8 +39,14 @@ def track_page_view(
     - 使用IP哈希进行去重
     - 记录会话信息用于分析
     """
-    # 获取请求信息
-    path = str(request.url.path)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    
+    content_type = body.get("content_type")
+    content_id = body.get("content_id")
+    path = body.get("path", str(request.url.path))
     referrer = request.headers.get("Referer", "")[:500] if request.headers.get("Referer") else None
     user_agent = request.headers.get("User-Agent", "")[:500] if request.headers.get("User-Agent") else None
     ip_hash = get_client_ip(request)

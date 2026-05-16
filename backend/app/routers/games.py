@@ -1,3 +1,4 @@
+import math
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
@@ -10,7 +11,7 @@ from ..auth import get_current_user
 router = APIRouter(prefix="/games", tags=["游戏"])
 
 
-@router.get("", response_model=List[schemas.GameResponse])
+@router.get("", response_model=schemas.PaginatedResponse[schemas.GameResponse])
 def get_games(
     category: Optional[str] = None,
     search: Optional[str] = None,
@@ -31,7 +32,18 @@ def get_games(
             )
         )
 
-    return query.order_by(models.Game.created_at.desc()).offset(skip).limit(limit).all()
+    total = query.count()
+    items = query.order_by(models.Game.created_at.desc()).offset(skip).limit(limit).all()
+    total_pages = math.ceil(total / limit) if total > 0 else 0
+    page = skip // limit + 1 if limit > 0 else 1
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": limit,
+        "total_pages": total_pages,
+    }
 
 
 @router.get("/{game_id}", response_model=schemas.GameResponse)
@@ -40,10 +52,7 @@ def get_game(game_id: int, db: Session = Depends(get_db)):
     if not game:
         raise HTTPException(status_code=404, detail="游戏不存在")
     
-    # 增加游戏浏览量
-    game.views += 1
-    db.commit()
-    
+    # 浏览量由前端调用 /api/analytics/track 统一记录
     return game
 
 

@@ -91,6 +91,12 @@ const routes = [
     name: 'AdminOpenClaw',
     component: () => import('../pages/admin/AdminOpenClaw.vue'),
     meta: { requiresAdmin: true }
+  },
+  // 404 - 必须放在最后
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('../pages/NotFound.vue')
   }
 ]
 

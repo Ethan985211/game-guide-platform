@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
-from typing import Optional, List
+from typing import Optional, List, TypeVar, Generic
 from datetime import datetime
 
 
@@ -280,3 +280,14 @@ class OpenClawResponse(BaseModel):
     success: bool
     data: Optional[dict] = None
     error: Optional[str] = None
+
+
+# ============ Generic Pagination ============
+T = TypeVar('T')
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    items: List[T]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
