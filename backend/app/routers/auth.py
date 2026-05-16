@@ -15,7 +15,10 @@ from ..auth import (
     get_current_user,
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
-from ..email_service import email_service
+try:
+    from ..email_service import email_service
+except ImportError:
+    email_service = None
 
 router = APIRouter(prefix="/auth", tags=["认证"])
 
@@ -66,7 +69,10 @@ async def send_verify_code(request: schemas.SendVerifyCodeRequest, db: Session =
     """
 
     try:
-        await email_service.send_email(request.email, subject, html_content)
+        if email_service:
+            await email_service.send_email(request.email, subject, html_content)
+        else:
+            print(f"[警告] 邮件服务不可用（yagmail未安装），验证码: {code}")
     except Exception as e:
         print(f"[警告] 邮件发送失败: {str(e)}")
 

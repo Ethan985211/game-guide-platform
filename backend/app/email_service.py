@@ -2,11 +2,18 @@
 邮件服务模块
 支持QQ邮箱发送验证邮件、密码重置等功能
 """
-import yagmail
 import os
 import hashlib
 import time
 from typing import Optional
+
+# yagmail 是可选依赖（仅腾讯云镜像不可用，需从 PyPI 安装）
+try:
+    import yagmail
+    YAGMAIL_AVAILABLE = True
+except ImportError:
+    yagmail = None
+    YAGMAIL_AVAILABLE = False
 
 # 邮件配置
 EMAIL_HOST = "smtp.qq.com"
@@ -62,6 +69,11 @@ class EmailService:
         if not self._is_configured():
             print(f"[警告] 邮件服务未配置，无法发送邮件到 {to}")
             print(f"[提示] 请设置环境变量 EMAIL_USER 和 EMAIL_PASSWORD")
+            return False
+
+        if not YAGMAIL_AVAILABLE:
+            print(f"[警告] yagmail 未安装，无法发送邮件到 {to}")
+            print(f"[提示] pip install yagmail")
             return False
         
         try:

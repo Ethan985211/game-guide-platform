@@ -11,17 +11,21 @@ load_dotenv()
 # 创建数据库表
 Base.metadata.create_all(bind=engine)
 
+import os
+
 app = FastAPI(
     title="游戏攻略聚合平台 API",
     description="多款游戏聚合的游戏攻略网站后端 API",
     version="1.0.0",
-    root_path="/api"
+    # nginx 反向代理：/api/* → backend，docs 从 /api/docs 访问
+    root_path="/api",
 )
 
-# 配置 CORS
+# 配置 CORS（生产环境限制来源）
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://82.156.34.78").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,6 +58,6 @@ def root():
     }
 
 
-@app.get("/api/health")
+@app.get("/health")
 def health_check():
     return {"status": "healthy"}
