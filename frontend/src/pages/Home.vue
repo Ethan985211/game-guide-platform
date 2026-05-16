@@ -1,7 +1,8 @@
 <template>
   <div class="home">
     <!-- 英雄区域 -->
-    <section class="hero">
+    <section class="hero" @mousemove="handleHeroMouseMove" @mouseleave="handleHeroMouseLeave">
+      <GlassWipe class="hero-wipe" :mouse-x="heroMouseX" :mouse-y="heroMouseY" />
       <div class="hero-bg-pattern"></div>
       <div class="hero-content">
         <div class="hero-badge">GAME GUIDE PLATFORM</div>
@@ -129,13 +130,19 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api'
+import GlassWipe from '../components/GlassWipe.vue'
 
 const router = useRouter()
 const games = ref([])
 const articles = ref([])
+const heroMouseX = ref(-1000)
+const heroMouseY = ref(-1000)
+const globalMouseX = ref(0)
+const globalMouseY = ref(0)
+const isMouseInHero = ref(false)
 
 const totalViews = computed(() => {
   return articles.value.reduce((sum, a) => sum + (a.views || 0), 0)
@@ -167,7 +174,37 @@ const onImgError = (e) => {
 const goToGame = (id) => router.push(`/games/${id}`)
 const goToArticle = (id) => router.push(`/articles/${id}`)
 
+const handleHeroMouseMove = (e) => {
+  globalMouseX.value = e.clientX
+  globalMouseY.value = e.clientY
+  isMouseInHero.value = true
+  updateHeroMousePosition()
+}
+
+const handleHeroMouseLeave = () => {
+  isMouseInHero.value = false
+  heroMouseX.value = -1000
+  heroMouseY.value = -1000
+}
+
+const updateHeroMousePosition = () => {
+  if (!isMouseInHero.value) return
+  const hero = document.querySelector('.hero')
+  if (hero) {
+    const rect = hero.getBoundingClientRect()
+    heroMouseX.value = globalMouseX.value - rect.left
+    heroMouseY.value = globalMouseY.value - rect.top
+  }
+}
+
+const onGlobalMouseMove = (e) => {
+  globalMouseX.value = e.clientX
+  globalMouseY.value = e.clientY
+}
+
 onMounted(async () => {
+  window.addEventListener('mousemove', onGlobalMouseMove)
+
   try {
     const [gamesRes, articlesRes] = await Promise.all([
       api.get('/api/games'),
@@ -178,6 +215,10 @@ onMounted(async () => {
   } catch (err) {
     console.error('加载数据失败:', err)
   }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('mousemove', onGlobalMouseMove)
 })
 </script>
 
@@ -203,6 +244,12 @@ onMounted(async () => {
   z-index: 0;
 }
 
+.hero-wipe {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
 .hero-content {
   position: relative;
   z-index: 2;
@@ -223,11 +270,11 @@ onMounted(async () => {
 }
 
 .hero h1 {
-  font-size: clamp(52px, 9vw, 88px);
+  font-size: clamp(64px, 10vw, 120px);
   font-weight: 900;
-  line-height: 1.05;
+  line-height: 1.0;
   letter-spacing: -3px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   color: var(--text-primary);
 }
 

@@ -4,17 +4,32 @@
     <div class="page-hero">
       <h1 class="page-hero-title">攻略文章</h1>
       <p class="page-hero-sub">精选游戏攻略，助你快速上手、轻松通关</p>
-      <div class="search-box">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="搜索攻略..."
-          class="search-input"
-        />
+      <div class="hero-controls">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="搜索攻略标题或游戏名..."
+            class="search-input"
+          />
+        </div>
+        <router-link v-if="isLoggedIn" to="/articles/create" class="btn-create">
+          ✏️ 发布攻略
+        </router-link>
       </div>
-      <router-link v-if="isLoggedIn" to="/articles/create" class="btn-create">
-        发布攻略
-      </router-link>
+      <!-- 分类标签 -->
+      <div class="category-tabs">
+        <button
+          v-for="tab in tabs"
+          :key="tab.key"
+          class="tab-btn"
+          :class="{ active: activeTab === tab.key }"
+          @click="activeTab = tab.key"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
     </div>
 
     <!-- 加载 -->
@@ -60,13 +75,15 @@
           </p>
           <div class="article-card-meta">
             <div class="article-card-author">
-              <span class="author-avatar-sm">{{ (article.author?.username || article.author_name || 'A')[0] }}</span>
+              <span class="author-avatar-sm" :class="avatarColor(article.author?.username || 'A')">
+                {{ (article.author?.username || article.author_name || 'A')[0] }}
+              </span>
               <span>{{ article.author?.username || article.author_name || '管理员' }}</span>
             </div>
             <div class="article-card-stats">
-              <span>{{ article.likes || 0 }} 赞</span>
+              <span class="stat-item">{{ article.views || 0 }} 阅读</span>
               <span class="meta-sep">·</span>
-              <span>{{ article.views || 0 }} 阅读</span>
+              <span class="stat-item">{{ article.likes || 0 }} 赞</span>
             </div>
           </div>
         </div>
@@ -86,21 +103,40 @@ const authStore = useAuthStore()
 const articles = ref([])
 const loading = ref(true)
 const searchQuery = ref('')
+const activeTab = ref('all')
+
+const tabs = [
+  { key: 'all', label: '全部' },
+  { key: 'guide', label: '攻略' },
+  { key: 'tips', label: '心得' },
+  { key: 'news', label: '资讯' },
+]
 
 const isLoggedIn = computed(() => authStore.isLoggedIn)
 
 const filteredArticles = computed(() => {
-  if (!searchQuery.value) return articles.value
-  const q = searchQuery.value.toLowerCase()
-  return articles.value.filter(a =>
-    a.title.toLowerCase().includes(q) ||
-    (a.game?.name || a.game_name || '').toLowerCase().includes(q)
-  )
+  let result = articles.value
+  if (activeTab.value !== 'all') {
+    result = result.filter(a => a.category === activeTab.value)
+  }
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    result = result.filter(a =>
+      a.title.toLowerCase().includes(q) ||
+      (a.game?.name || a.game_name || '').toLowerCase().includes(q)
+    )
+  }
+  return result
 })
 
 const extractSummary = (article) => {
   const text = article.content || ''
   return text.replace(/<[^>]*>/g, '').replace(/[*#]/g, '').slice(0, 120) + (text.length > 120 ? '...' : '')
+}
+
+const avatarColor = (name) => {
+  const colors = ['avatar-purple', 'avatar-blue', 'avatar-green', 'avatar-orange', 'avatar-pink']
+  return colors[(name || 'A').charCodeAt(0) % colors.length]
 }
 
 const onImgError = (e) => {
@@ -125,12 +161,13 @@ onMounted(async () => {
 /* 页面头部 */
 .page-hero {
   text-align: center;
-  padding: 60px 24px 32px;
+  padding: 72px 24px 32px;
   background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color, #eee);
 }
 
 .page-hero-title {
-  font-size: clamp(32px, 5vw, 48px);
+  font-size: clamp(36px, 6vw, 56px);
   font-weight: 900;
   letter-spacing: -2px;
   color: var(--text-primary);
@@ -138,47 +175,107 @@ onMounted(async () => {
 }
 
 .page-hero-sub {
-  font-size: 16px;
+  font-size: 17px;
   color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+.hero-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 28px;
 }
 
+/* 搜索框 */
 .search-box {
-  max-width: 400px;
-  margin: 0 auto 20px;
+  position: relative;
+  max-width: 420px;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .search-input {
   width: 100%;
-  padding: 12px 20px;
+  padding: 14px 20px 14px 44px;
   border: 2px solid var(--border-color, #ddd);
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 15px;
   outline: none;
   background: var(--bg-card, white);
   color: var(--text-primary);
-  transition: border-color 0.2s;
+  transition: border-color 0.25s, box-shadow 0.25s;
 }
 
 .search-input:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255,107,0,0.1);
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.5;
 }
 
 .btn-create {
-  display: inline-block;
-  padding: 12px 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 28px;
   background: var(--accent);
   color: white;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: 14px;
+  font-size: 15px;
   font-weight: 700;
   text-decoration: none;
   transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
 }
 
 .btn-create:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(255,107,0,0.3);
+}
+
+/* 分类标签 */
+.category-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 10px 24px;
+  border: 2px solid var(--border-color, #ddd);
+  border-radius: 100px;
+  background: var(--bg-card, white);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tab-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
 }
 
 /* 文章网格 */
@@ -192,7 +289,7 @@ onMounted(async () => {
 }
 
 .article-card {
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
   background: var(--bg-card, white);
   border: 1px solid var(--border-color, #eee);
@@ -202,7 +299,7 @@ onMounted(async () => {
 
 .article-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 24px 48px rgba(0,0,0,0.1);
+  box-shadow: 0 28px 56px rgba(0,0,0,0.1);
 }
 
 .article-card-img {
@@ -216,11 +313,11 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s;
+  transition: transform 0.5s;
 }
 
 .article-card:hover .article-card-img img {
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
 
 .article-card-gradient {
@@ -231,32 +328,33 @@ onMounted(async () => {
 
 .article-card-overlay {
   position: absolute;
-  top: 14px;
-  left: 14px;
-  right: 14px;
+  top: 16px;
+  left: 16px;
+  right: 16px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
 }
 
 .article-card-game {
-  padding: 4px 12px;
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(10px);
+  padding: 6px 14px;
+  background: rgba(255,255,255,0.16);
+  backdrop-filter: blur(12px);
   border-radius: 8px;
   color: white;
   font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.3px;
 }
 
 .article-card-badge {
-  padding: 4px 12px;
+  padding: 6px 14px;
   background: var(--accent);
   border-radius: 8px;
   color: white;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
 .article-card-body {
@@ -265,9 +363,9 @@ onMounted(async () => {
 
 .article-card-title {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
-  line-height: 1.4;
+  line-height: 1.45;
   margin-bottom: 10px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -279,7 +377,7 @@ onMounted(async () => {
   font-size: 14px;
   color: var(--text-secondary);
   line-height: 1.7;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -290,6 +388,8 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color, #f0f0f0);
 }
 
 .article-card-author {
@@ -298,30 +398,41 @@ onMounted(async () => {
   gap: 8px;
   font-size: 13px;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
 .author-avatar-sm {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--accent);
-  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
+  color: white;
 }
+
+.avatar-purple { background: linear-gradient(135deg, #667eea, #764ba2); }
+.avatar-blue { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.avatar-green { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.avatar-orange { background: linear-gradient(135deg, #fa709a, #fee140); }
+.avatar-pink { background: linear-gradient(135deg, #f093fb, #f5576c); }
 
 .article-card-stats {
   font-size: 12px;
   color: var(--text-muted);
   display: flex;
-  gap: 6px;
+  gap: 4px;
+}
+
+.stat-item {
+  color: var(--text-muted);
 }
 
 .meta-sep {
   opacity: 0.3;
+  margin: 0 4px;
 }
 
 /* 状态 */
@@ -356,6 +467,16 @@ onMounted(async () => {
   }
   .page-hero {
     padding: 48px 20px 24px;
+  }
+  .hero-controls {
+    flex-direction: column;
+  }
+  .search-box {
+    max-width: 100%;
+  }
+  .btn-create {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>
