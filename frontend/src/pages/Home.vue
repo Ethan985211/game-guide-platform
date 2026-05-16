@@ -21,21 +21,21 @@
     <!-- 数据统计 -->
     <section class="stats-bar">
       <div class="stat-card">
-        <span class="stat-icon">🎮</span>
         <span class="stat-number">{{ games.length }}</span>
         <span class="stat-label">热门游戏</span>
+        <span class="stat-accent"></span>
       </div>
       <div class="stat-divider"></div>
       <div class="stat-card">
-        <span class="stat-icon">📝</span>
         <span class="stat-number">{{ articles.length }}</span>
         <span class="stat-label">攻略文章</span>
+        <span class="stat-accent"></span>
       </div>
       <div class="stat-divider"></div>
       <div class="stat-card">
-        <span class="stat-icon">👥</span>
         <span class="stat-number">{{ totalViews }}</span>
         <span class="stat-label">总浏览量</span>
+        <span class="stat-accent"></span>
       </div>
     </section>
 
@@ -370,7 +370,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 0 60px;
   transition: transform 0.3s;
 }
@@ -379,8 +379,9 @@ onUnmounted(() => {
   transform: translateY(-4px);
 }
 
-.stat-icon {
-  font-size: 28px;
+.stat-card:hover .stat-accent {
+  width: 48px;
+  background: var(--accent);
 }
 
 .stat-number {
@@ -395,6 +396,15 @@ onUnmounted(() => {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 2px;
+}
+
+.stat-accent {
+  display: block;
+  width: 24px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border-color);
+  transition: width 0.3s, background 0.3s;
 }
 
 .stat-divider {

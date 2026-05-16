@@ -30,6 +30,23 @@
     </div>
 
     <div class="page-body">
+      <!-- 下载链接 -->
+      <section class="section section-links" v-if="gameLinks.website || gameLinks.steam">
+        <div class="section-header">
+          <h2 class="section-title">游戏下载</h2>
+        </div>
+        <div class="links-row">
+          <a v-if="gameLinks.website" :href="gameLinks.website" target="_blank" rel="noopener" class="link-btn link-official">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+            官方网站
+          </a>
+          <a v-if="gameLinks.steam" :href="gameLinks.steam" target="_blank" rel="noopener" class="link-btn link-steam">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11.974 0C5.362 0 0 5.362 0 11.974S5.362 23.948 11.974 23.948 23.948 18.586 23.948 11.974C23.948 5.362 18.586 0 11.974 0zm4.977 17.323l-1.793.76-1.628-2.362c-.39.155-.8.24-1.228.24a3.297 3.297 0 01-3.298-3.298 3.297 3.297 0 013.298-3.298 3.297 3.297 0 013.298 3.298c0 .484-.11.942-.296 1.358l1.347 1.956zm1.072-3.346l.61-1.753-3.608-2.637-.638 1.342 3.636 3.048z"/></svg>
+            Steam 商店
+          </a>
+        </div>
+      </section>
+
       <!-- 角色图鉴 -->
       <section class="section" v-if="characters.length">
         <div class="section-header">
@@ -123,6 +140,21 @@ const game = ref(null)
 const characters = ref([])
 const articles = ref([])
 const loading = ref(true)
+
+const gameLinkMap = {
+  1: { website: 'https://genshin.hoyoverse.com/', steam: '' },
+  2: { website: 'https://www.honorofkings.com/', steam: '' },
+  3: { website: 'https://hsr.hoyoverse.com/', steam: '' },
+  4: { website: 'https://zenless.hoyoverse.com/', steam: 'https://store.steampowered.com/app/4162040/Zenless_Zone_Zero/' },
+  5: { website: 'https://www.leagueoflegends.com/', steam: '' },
+  6: { website: 'https://www.heishenhua.com/', steam: 'https://store.steampowered.com/app/2358720/Black_Myth_Wukong/' },
+  7: { website: 'https://www.arknights.global/', steam: '' },
+}
+
+const gameLinks = computed(() => {
+  if (!game.value) return {}
+  return gameLinkMap[game.value.id] || {}
+})
 
 const rarityClass = (rarity) => {
   if (!rarity) return ''
@@ -517,6 +549,54 @@ onMounted(async () => {
   color: var(--text-muted);
   padding: 40px;
   font-size: 15px;
+}
+
+/* 下载链接 */
+.section-links {
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
+}
+
+.links-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.25s;
+  border: 2px solid var(--border-color, #ddd);
+  color: var(--text-primary);
+  background: var(--bg-card, white);
+}
+
+.link-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+}
+
+.link-official:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.link-steam {
+  background: #1a1a2e;
+  border-color: #1a1a2e;
+  color: #fff;
+}
+
+.link-steam:hover {
+  background: #16213e;
+  border-color: #16213e;
+  color: #66c0f4;
 }
 
 /* 加载/空状态 */

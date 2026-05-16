@@ -12,6 +12,20 @@
           @keyup.enter="loadGames"
           class="search-input"
         />
+        <select v-model="categoryFilter" @change="loadGames" class="search-select">
+          <option value="">全部分类</option>
+          <option value="RPG">RPG</option>
+          <option value="MOBA">MOBA</option>
+          <option value="FPS">FPS</option>
+          <option value="ACT">ACT</option>
+          <option value="SLG">SLG</option>
+          <option value="塔防">塔防</option>
+        </select>
+        <select v-model="sortBy" @change="loadGames" class="search-select">
+          <option value="newest">最新</option>
+          <option value="name">名称</option>
+          <option value="views">热门</option>
+        </select>
         <button @click="loadGames" class="search-btn">搜索</button>
       </div>
     </div>
@@ -24,7 +38,12 @@
 
     <!-- 空状态 -->
     <div v-else-if="games.length === 0" class="empty-state">
-      <div class="empty-icon">🎮</div>
+      <div class="empty-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.3">
+          <rect x="2" y="6" width="20" height="12" rx="2"/>
+          <path d="M12 12h.01M8 12h.01M16 12h.01M6 6V4a2 2 0 012-2h8a2 2 0 012 2v2"/>
+        </svg>
+      </div>
       <h3>暂无游戏</h3>
       <p>游戏库正在更新中，稍后再来看看</p>
     </div>
@@ -70,6 +89,8 @@ import { gameAPI } from '../api'
 const router = useRouter()
 const games = ref([])
 const searchQuery = ref('')
+const categoryFilter = ref('')
+const sortBy = ref('newest')
 const loading = ref(true)
 
 const gradientBg = (id) => {
@@ -94,12 +115,26 @@ const goToGame = (id) => router.push(`/games/${id}`)
 const loadGames = async () => {
   loading.value = true
   try {
-    const response = await gameAPI.getGames({
-      search: searchQuery.value,
+    const params = {
       skip: 0,
       limit: 30
-    })
-    games.value = response.data?.items || response.data || []
+    }
+    if (searchQuery.value) params.search = searchQuery.value
+    if (categoryFilter.value) params.category = categoryFilter.value
+    if (sortBy.value === 'views') params.sort = 'views'
+    if (sortBy.value === 'name') params.sort = 'name'
+
+    const response = await gameAPI.getGames(params)
+    let items = response.data?.items || response.data || []
+
+    // Client-side sort for newest (default) and name
+    if (sortBy.value === 'newest') {
+      items = [...items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    } else if (sortBy.value === 'name') {
+      items = [...items].sort((a, b) => a.name.localeCompare(b.name, 'zh'))
+    }
+
+    games.value = items
   } catch (error) {
     console.error('加载游戏失败', error)
   } finally {
@@ -134,7 +169,7 @@ onMounted(loadGames)
 
 .search-box {
   display: flex;
-  max-width: 480px;
+  max-width: 680px;
   margin: 0 auto;
   gap: 0;
 }
@@ -156,6 +191,23 @@ onMounted(loadGames)
   border-color: var(--accent);
 }
 
+.search-select {
+  padding: 14px 12px;
+  border: 2px solid var(--border-color, #ddd);
+  border-right: none;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  background: var(--bg-card, white);
+  color: var(--text-primary);
+  min-width: 90px;
+  transition: border-color 0.2s;
+}
+
+.search-select:focus {
+  border-color: var(--accent);
+}
+
 .search-btn {
   padding: 14px 28px;
   background: var(--accent);
@@ -166,6 +218,7 @@ onMounted(loadGames)
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
+  white-space: nowrap;
 }
 
 .search-btn:hover {
