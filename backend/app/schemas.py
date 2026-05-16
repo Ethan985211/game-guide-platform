@@ -31,8 +31,10 @@ class UserUpdate(BaseModel):
     avatar: Optional[str] = None
 
 
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     id: int
+    username: str
+    email: str  # 使用 str 而非 EmailStr，避免数据库中已存在的旧邮箱（如 system.local）导致序列化失败
     avatar: str
     bio: Optional[str]
     is_active: bool

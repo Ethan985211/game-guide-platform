@@ -149,6 +149,22 @@ const gameLinkMap = {
   5: { website: 'https://www.leagueoflegends.com/', steam: '' },
   6: { website: 'https://www.heishenhua.com/', steam: 'https://store.steampowered.com/app/2358720/Black_Myth_Wukong/' },
   7: { website: 'https://www.arknights.global/', steam: '' },
+  8: { website: 'https://wutheringwaves.kurogames.com/', steam: '' },
+  9: { website: 'https://ht.wanmei.com/', steam: 'https://store.steampowered.com/app/2064650/Tower_of_Fantasy/' },
+  10: { website: 'https://bh3.mihoyo.com/', steam: 'https://store.steampowered.com/app/2501360/Honkai_Impact_3rd/' },
+  11: { website: 'https://www.yjwujian.cn/', steam: 'https://store.steampowered.com/app/1203220/NARAKA_BLADEPOINT/' },
+  12: { website: 'https://df.qq.com/', steam: '' },
+  13: { website: 'https://mdnf.qq.com/', steam: '' },
+  14: { website: 'https://blhx.biligame.com/', steam: '' },
+  15: { website: 'https://gf2.sunborngame.com/', steam: '' },
+  16: { website: 'https://www.eldenring.jp/', steam: 'https://store.steampowered.com/app/1245620/ELDEN_RING/' },
+  17: { website: 'https://www.cyberpunk.net/', steam: 'https://store.steampowered.com/app/1091500/Cyberpunk_2077/' },
+  18: { website: 'https://www.zelda.com/tears-of-the-kingdom/', steam: '' },
+  19: { website: 'https://www.jp.square-enix.com/ffvii_rebirth/', steam: 'https://store.steampowered.com/app/2909400/FINAL_FANTASY_VII_REBIRTH/' },
+  20: { website: 'https://www.rockstargames.com/VI', steam: '' },
+  21: { website: 'https://www.monsterhunter.com/wilds/', steam: 'https://store.steampowered.com/app/2246340/Monster_Hunter_Wilds/' },
+  22: { website: 'https://www.kojimaproductions.jp/death-stranding-2', steam: '' },
+  23: { website: 'https://civilization.2k.com/civ-vii/', steam: 'https://store.steampowered.com/app/289070/Sid_Meiers_Civilization_VII/' },
 }
 
 const gameLinks = computed(() => {

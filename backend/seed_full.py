@@ -1108,6 +1108,17 @@ else:
     conn.commit()
     print(f"新增角色: {char_count} 个\n")
 
+# 查找 Hermes 系统用户作为默认作者
+cur.execute("SELECT id FROM users WHERE email = ?", ('hermes@gameguide.internal',))
+row = cur.fetchone()
+if row:
+    hermes_user_id = row[0]
+else:
+    cur.execute("SELECT id FROM users WHERE is_admin = 1 LIMIT 1")
+    row = cur.fetchone()
+    hermes_user_id = row[0] if row else 1
+print(f"文章默认作者 ID: {hermes_user_id}")
+
 # --- 插入文章 ---
 cur.execute("SELECT slug FROM articles")
 existing_slugs = {row[0] for row in cur.fetchall()}
@@ -1120,7 +1131,7 @@ for game_name, title, slug, content, category, tags in ARTICLES:
     cur.execute("""
         INSERT INTO articles (title, slug, content, game_id, author_id, category, tags, views, likes, is_published, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 1, ?)
-    """, (title, slug, content, gid, 1, category, tags, now()))
+    """, (title, slug, content, gid, hermes_user_id, category, tags, now()))
     existing_slugs.add(slug)
     article_count += 1
 

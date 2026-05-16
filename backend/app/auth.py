@@ -198,14 +198,14 @@ verify_openclaw_api_key = verify_hermes_api_key
 def get_hermes_user(db: Session = Depends(get_db)) -> Optional[models.User]:
     """获取Hermes Agent专用系统用户（用于AI操作）"""
     hermes_user = db.query(models.User).filter(
-        models.User.email == "hermes@system.local"
+        models.User.email == "hermes@gameguide.internal"
     ).first()
 
     # 如果不存在，创建一个
     if not hermes_user:
         hermes_user = models.User(
             username="Hermes Agent",
-            email="hermes@system.local",
+            email="hermes@gameguide.internal",
             hashed_password=get_password_hash("hermes-system-only"),
             is_admin=True,
             is_active=True,
