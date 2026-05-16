@@ -192,134 +192,257 @@ const formatNum = (n) => {
 const markdownToHtml = (md) => {
   if (!md) return ''
 
-  // Split into blocks (paragraphs separated by blank lines)
-  const blocks = md.split(/\n\n+/)
+  const lines = md.split('\n')
   const result = []
+  let i = 0
+  let inCodeBlock = false
+  let codeLang = ''
+  let codeLines = []
+  let inTable = false
+  let tableRows = []
+  let tableHeader = []
+  let inBlockquote = false
+  let blockquoteLines = []
+  let listBuffer = []     // [{ indent, prefix, content, ordered }]
+  let paraBuffer = []    // lines of a pending paragraph
 
-  for (let block of blocks) {
-    block = block.trim()
-    if (!block) continue
+  const flushParagraph = () => {
+    if (paraBuffer.length === 0) return
+    result.push(`<p class="md-p">${inlineFormat(paraBuffer.join('<br>'))}</p>`)
+    paraBuffer = []
+  }
 
-    const lines = block.split('\n')
+  const flushList = () => {
+    if (listBuffer.length === 0) return
+    const isOrdered = listBuffer[0].ordered
+    const tag = isOrdered ? 'ol' : 'ul'
+    const cls = isOrdered ? 'md-ol' : 'md-ul'
+    const items = renderListItems(listBuffer)
+    result.push(`<${tag} class="${cls}">${items}</${tag}>`)
+    listBuffer = []
+  }
 
-    // Check for code blocks ``` ... ```
-    if (lines[0].startsWith('```')) {
-      const lang = lines[0].slice(3).trim()
-      const codeLines = []
-      let i = 1
-      for (; i < lines.length; i++) {
-        if (lines[i].startsWith('```')) break
-        codeLines.push(lines[i])
+  const renderListItems = (buf) => {
+    let out = ''
+    let j = 0
+    while (j < buf.length) {
+      const item = buf[j]
+      const indent = item.indent
+      // gather nested items
+      const children = []
+      let k = j + 1
+      while (k < buf.length && buf[k].indent > indent) {
+        children.push(buf[k])
+        k++
       }
-      const escaped = codeLines.join('\n').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      result.push(`<pre class="md-code"><code${lang ? ` class="language-${lang}"` : ''}>${escaped}</code></pre>`)
-      continue
+      const body = inlineFormat(item.content)
+      const childHtml = children.length > 0 ? renderListItems(children) : ''
+      out += `<li>${body}${childHtml}</li>`
+      j = k
     }
+    return out
+  }
 
-    // Tables: lines where first line has at least 2 | chars and second line has |---|---| pattern
-    if (lines.length >= 2 && lines[0].includes('|') && lines[1].match(/^\|[\s\-:|]+\|/)) {
-      const headerCells = lines[0].split('|').filter(c => c.trim())
-      const rows = []
-      for (let j = 2; j < lines.length; j++) {
-        if (lines[j].includes('|')) {
-          const cells = lines[j].split('|').filter(c => c.trim())
-          const cellHtml = cells.map(c => `<td>${inlineFormat(c.trim())}</td>`).join('')
-          rows.push(`<tr>${cellHtml}</tr>`)
-        } else {
-          break
-        }
+  const flushBlockquote = () => {
+    if (blockquoteLines.length === 0) return
+    result.push(`<blockquote class="md-blockquote">${inlineFormat(blockquoteLines.join('<br>'))}</blockquote>`)
+    blockquoteLines = []
+    inBlockquote = false
+  }
+
+  const endCodeBlock = () => {
+    inCodeBlock = false
+    const escaped = codeLines.join('\n').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    result.push(`<pre class="md-code"><code${codeLang ? ` class="language-${codeLang}"` : ''}>${escaped}</code></pre>`)
+    codeLines = []
+    codeLang = ''
+  }
+
+  const endTable = () => {
+    inTable = false
+    if (tableHeader.length === 0) { tableRows = []; return }
+    const headerHtml = tableHeader.map(h => `<th>${inlineFormat(h.trim())}</th>`).join('')
+    const rowsHtml = tableRows.map(row => {
+      const cells = row.map(c => `<td>${inlineFormat(c.trim())}</td>`).join('')
+      return `<tr>${cells}</tr>`
+    }).join('')
+    result.push(`<div class="md-table-wrap"><table class="md-table"><thead><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table></div>`)
+    tableRows = []
+    tableHeader = []
+  }
+
+  const isListItem = (line) => {
+    return /^(\s*)([-*]|\d+\.)\s+(.*)/.test(line)
+  }
+
+  const parseListItem = (line) => {
+    const m = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)/)
+    if (!m) return null
+    return {
+      indent: m[1].length,
+      prefix: m[2],
+      ordered: /^\d+\.$/.test(m[2]),
+      content: m[3]
+    }
+  }
+
+  const isTableSep = (line) => /^\|[\s\-:|]+\|/.test(line)
+  const isTableRow = (line) => line.includes('|')
+
+  // ---- MAIN LOOP ----
+  while (i < lines.length) {
+    const raw = lines[i]
+    const line = raw
+
+    // Inside code block
+    if (inCodeBlock) {
+      if (line.startsWith('```')) {
+        endCodeBlock()
+      } else {
+        codeLines.push(raw)
       }
-      const headerHtml = headerCells.map(h => `<th>${inlineFormat(h.trim())}</th>`).join('')
-      result.push(`<div class="md-table-wrap"><table class="md-table"><thead><tr>${headerHtml}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`)
+      i++
       continue
     }
 
-    // Blockquotes (> text)
-    if (lines[0].startsWith('>')) {
-      const quote = lines.map(l => l.replace(/^>\s?/, '')).join('\n')
-      result.push(`<blockquote class="md-blockquote">${inlineFormat(quote)}</blockquote>`)
+    // Start code block
+    if (line.startsWith('```')) {
+      flushParagraph()
+      flushList()
+      flushBlockquote()
+      if (inTable) endTable()
+      inCodeBlock = true
+      codeLang = line.slice(3).trim()
+      i++
       continue
     }
 
-    // Horizontal rules (--- or ***)
-    if (block === '---' || block === '***' || block === '***---' || block.match(/^[-*]{3,}$/)) {
+    // Inside table
+    if (inTable) {
+      if (line.trim() === '') {
+        endTable()
+        i++
+        continue
+      }
+      if (isTableSep(line)) { i++; continue } // skip separator rows inside table
+      if (isTableRow(line)) {
+        tableRows.push(line.split('|').filter(c => c !== ''))
+      } else {
+        endTable()
+        continue // re-process this line
+      }
+      i++
+      continue
+    }
+
+    // Table start (at least 2 lines: header + sep)
+    if (i + 1 < lines.length && isTableRow(line) && isTableSep(lines[i + 1])) {
+      flushParagraph()
+      flushList()
+      flushBlockquote()
+      inTable = true
+      tableHeader = line.split('|').filter(c => c !== '')
+      i += 2 // skip header + separator
+      continue
+    }
+
+    // Blockquote
+    if (line.startsWith('>')) {
+      flushParagraph()
+      flushList()
+      if (inTable) endTable()
+      inBlockquote = true
+      blockquoteLines.push(line.replace(/^>\s?/, ''))
+      i++
+      continue
+    }
+    if (inBlockquote && line.trim() === '') {
+      flushBlockquote()
+      i++
+      continue
+    }
+    // continuation of blockquote (next line also >)
+    if (inBlockquote && line.startsWith('>')) {
+      blockquoteLines.push(line.replace(/^>\s?/, ''))
+      i++
+      continue
+    }
+
+    // Horizontal rule
+    if (/^[-*]{3,}$/.test(line.trim())) {
+      flushParagraph()
+      flushList()
+      flushBlockquote()
+      if (inTable) endTable()
       result.push('<hr class="md-hr" />')
+      i++
       continue
     }
 
-    // Unordered lists (- item or * item)
-    if (lines.every(l => l.match(/^[-*]\s/) || l.match(/^\s{2,}[-*]\s/))) {
-      const listItems = processListItems(lines)
-      result.push(`<ul class="md-ul">${listItems}</ul>`)
-      continue
-    }
-
-    // Ordered lists (1. item)
-    if (lines.every(l => l.match(/^\d+\.\s/) || l.match(/^\s{2,}\d+\.\s/))) {
-      const listItems = processListItems(lines, true)
-      result.push(`<ol class="md-ol">${listItems}</ol>`)
-      continue
-    }
-
-    // Headers
-    const headerMatch = block.match(/^(#{1,4})\s+(.+)$/m)
-    if (headerMatch && lines.length === 1) {
+    // Header (must be at start of line, not inside list/para)
+    const headerMatch = line.match(/^(#{1,4})\s+(.+)$/)
+    if (headerMatch) {
+      flushParagraph()
+      flushList()
+      flushBlockquote()
+      if (inTable) endTable()
       const level = headerMatch[1].length
       const text = inlineFormat(headerMatch[2])
       result.push(`<h${level} class="md-h md-h${level}">${text}</h${level}>`)
+      i++
       continue
     }
 
-    // Regular paragraph
-    let content = block
-    content = content.replace(/\n/g, '<br>')
-    content = inlineFormat(content)
-    result.push(`<p class="md-p">${content}</p>`)
+    // Blank line → flush everything
+    if (line.trim() === '') {
+      flushParagraph()
+      flushList()
+      flushBlockquote()
+      if (inTable) endTable()
+      i++
+      continue
+    }
+
+    // List item
+    const li = parseListItem(line)
+    if (li) {
+      flushParagraph()
+      flushBlockquote()
+      if (inTable) endTable()
+      // If list type or indent changes, flush previous list
+      if (listBuffer.length > 0) {
+        const prev = listBuffer[listBuffer.length - 1]
+        if (li.ordered !== prev.ordered || li.indent < prev.indent) {
+          flushList()
+        }
+      }
+      listBuffer.push(li)
+      i++
+      continue
+    }
+
+    // Regular paragraph line
+    if (listBuffer.length > 0) {
+      flushList()
+    }
+    if (inBlockquote) {
+      flushBlockquote()
+    }
+    paraBuffer.push(line)
+    i++
   }
+
+  // End-of-input flushes
+  if (inCodeBlock) endCodeBlock()
+  if (inTable) endTable()
+  flushList()
+  flushBlockquote()
+  flushParagraph()
 
   return result.join('\n')
 }
 
-// Process list items recursively (handles single-level nesting)
-const processListItems = (lines, ordered = false) => {
-  const items = []
-  let i = 0
-  while (i < lines.length) {
-    const line = lines[i]
-    const prefixMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)/)
-    if (!prefixMatch) { i++; continue }
-    const indent = prefixMatch[1].length
-    const content = inlineFormat(prefixMatch[3])
-
-    // Check for nested sub-items (next lines indented deeper)
-    const subLines = []
-    let j = i + 1
-    while (j < lines.length) {
-      const subMatch = lines[j].match(/^(\s*)([-*]|\d+\.)\s+(.*)/)
-      if (subMatch && subMatch[1].length > indent) {
-        subLines.push(lines[j])
-        j++
-      } else if (lines[j].match(/^\s{2,}/) && !lines[j].match(/^(\s*)([-*]|\d+\.)\s/)) {
-        // Continuation line for the current item
-        break
-      } else {
-        break
-      }
-    }
-
-    if (subLines.length > 0) {
-      const subHtml = processListItems(subLines, ordered)
-      items.push(`<li>${content}${subHtml}</li>`)
-      i = j
-    } else {
-      items.push(`<li>${content}</li>`)
-      i++
-    }
-  }
-  return items.join('')
-}
-
-// Inline formatting: bold, italic, code, links
+// Inline formatting: bold, italic, code
 const inlineFormat = (text) => {
   return text
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
