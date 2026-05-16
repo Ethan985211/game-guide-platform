@@ -97,6 +97,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import api from '../api'
+import { markdownToHtml, htmlToPlainText } from '../utils/markdown.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -131,7 +132,10 @@ const filteredArticles = computed(() => {
 
 const extractSummary = (article) => {
   const text = article.content || ''
-  return text.replace(/<[^>]*>/g, '').replace(/[*#]/g, '').slice(0, 120) + (text.length > 120 ? '...' : '')
+  // Render markdown to HTML first, then strip tags for clean plain text preview
+  const html = markdownToHtml(text)
+  const plain = htmlToPlainText(html)
+  return plain.slice(0, 120) + (plain.length > 120 ? '...' : '')
 }
 
 const avatarColor = (name) => {
