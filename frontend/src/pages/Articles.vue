@@ -104,7 +104,7 @@ const authStore = useAuthStore()
 const articles = ref([])
 const loading = ref(true)
 const searchQuery = ref('')
-const activeTab = ref('all')
+const activeTab = ref('guide')
 
 const tabs = [
   { key: 'all', label: '全部' },
@@ -151,7 +151,7 @@ const goToArticle = (id) => router.push(`/articles/${id}`)
 
 onMounted(async () => {
   try {
-    const res = await api.get('/api/articles')
+    const res = await api.get('/api/articles?limit=100')
     articles.value = res.data?.items || res.data || []
   } catch (err) {
     console.error('加载文章失败:', err)
