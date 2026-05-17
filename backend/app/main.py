@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from .database import engine, Base
 from .middleware import RateLimitMiddleware, RequestLogMiddleware
-from .routers import auth, games, characters, articles, search, admin, openclaw, analytics
+from .routers import auth, games, characters, articles, search, admin, openclaw, analytics, crawler
 
 load_dotenv()
 
@@ -87,6 +87,7 @@ _compat_router.add_api_route("/{path:path}", _redirect_openclaw, methods=["GET",
 app.include_router(_compat_router)
 
 app.include_router(analytics.router)
+app.include_router(crawler.router)
 
 
 @app.get("/")
