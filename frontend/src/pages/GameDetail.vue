@@ -90,33 +90,6 @@
         </div>
       </section>
 
-      <!-- 游戏简介（无角色时显示） -->
-      <section class="section" v-if="!characters.length">
-        <div class="section-header">
-          <h2 class="section-title">游戏简介</h2>
-        </div>
-        <div class="game-about">
-          <div class="about-grid">
-            <div class="about-card" v-if="game.publisher">
-              <span class="about-label">发行商</span>
-              <span class="about-val">{{ game.publisher }}</span>
-            </div>
-            <div class="about-card">
-              <span class="about-label">开发商</span>
-              <span class="about-val">{{ game.developer }}</span>
-            </div>
-            <div class="about-card" v-if="game.release_date">
-              <span class="about-label">发售日期</span>
-              <span class="about-val">{{ formatDate(game.release_date) }}</span>
-            </div>
-            <div class="about-card">
-              <span class="about-label">游戏类型</span>
-              <span class="about-val">{{ game.category }}</span>
-            </div>
-          </div>
-          <p class="about-desc">{{ game.description }}</p>
-        </div>
-      </section>
 
       <!-- 相关攻略 -->
       <section class="section">
@@ -590,48 +563,6 @@ onMounted(async () => {
   color: #283593;
 }
 
-/* ============ 游戏简介（无角色时） ============ */
-.game-about {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.about-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.about-card {
-  padding: 24px;
-  border-radius: 14px;
-  background: var(--bg-card, white);
-  border: 1px solid var(--border-color, #eee);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.about-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--text-muted, #999);
-}
-
-.about-val {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.about-desc {
-  font-size: 15px;
-  color: var(--text-secondary);
-  line-height: 1.9;
-}
-
 /* ============ 攻略文章卡片网格 ============ */
 .articles-grid {
   display: grid;
@@ -799,9 +730,6 @@ onMounted(async () => {
   }
   .articles-grid {
     grid-template-columns: 1fr;
-  }
-  .about-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>
