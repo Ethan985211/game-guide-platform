@@ -152,6 +152,12 @@ def update_me(
         current_user.bio = user_update.bio
     if user_update.avatar:
         current_user.avatar = user_update.avatar
+    if user_update.birth_date is not None:
+        from datetime import datetime as dt
+        try:
+            current_user.birth_date = dt.fromisoformat(user_update.birth_date)
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="日期格式错误，请使用 YYYY-MM-DD 格式")
 
     db.commit()
     db.refresh(current_user)

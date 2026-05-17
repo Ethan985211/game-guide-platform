@@ -18,6 +18,7 @@ class User(Base):
     is_verified = Column(Boolean, default=False)  # 邮箱是否已验证
     verification_code = Column(String(6), nullable=True)  # 验证码
     verification_expires = Column(DateTime(timezone=True), nullable=True)  # 验证码过期时间
+    birth_date = Column(DateTime, nullable=True, default=None)  # 出生日期（年龄验证）
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     articles = relationship("Article", back_populates="author")
@@ -121,3 +122,22 @@ class PageView(Base):
     content_type = Column(String(50), nullable=True)  # 内容类型: game, article, home
     content_id = Column(Integer, nullable=True)  # 内容ID
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+
+class ArticleImage(Base):
+    """文章图片表 - 文章内嵌图片"""
+    __tablename__ = "article_images"
+
+    id = Column(Integer, primary_key=True, index=True)
+    article_id = Column(Integer, ForeignKey("articles.id"), nullable=True)  # nullable 因为上传时可未关联文章
+    filename = Column(String(255))  # 存储的文件名
+    original_name = Column(String(255))  # 原始文件名
+    file_size = Column(Integer)  # 文件大小（字节）
+    mime_type = Column(String(50))  # MIME 类型
+    width = Column(Integer, nullable=True)  # 图片宽度
+    height = Column(Integer, nullable=True)  # 图片高度
+    uploader_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    article = relationship("Article", backref="images")
+    uploader = relationship("User")

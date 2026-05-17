@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from .database import engine, Base
 from .middleware import RateLimitMiddleware, RequestLogMiddleware
-from .routers import auth, games, characters, articles, search, admin, openclaw, analytics, crawler
+from .routers import auth, games, characters, articles, search, admin, openclaw, analytics, crawler, upload
 
 load_dotenv()
 
@@ -88,6 +88,7 @@ app.include_router(_compat_router)
 
 app.include_router(analytics.router)
 app.include_router(crawler.router)
+app.include_router(upload.router)
 
 
 @app.get("/")

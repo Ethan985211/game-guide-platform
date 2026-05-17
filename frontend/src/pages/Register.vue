@@ -60,6 +60,15 @@
           </div>
 
           <div class="form-group">
+            <label>出生日期（年龄验证）</label>
+            <input
+              v-model="form.birth_date"
+              type="date"
+              required
+            >
+          </div>
+
+          <div class="form-group">
             <label>密码</label>
             <input
               v-model="form.password"
@@ -125,7 +134,8 @@ const getParticleStyle = (i) => {
 const form = ref({
   username: '',
   email: '',
-  password: ''
+  password: '',
+  birth_date: '2000-01-01'
 })
 
 const loading = ref(false)
@@ -191,6 +201,7 @@ const handleRegister = async () => {
       username: form.value.username,
       email: form.value.email,
       password: form.value.password,
+      birth_date: form.value.birth_date,
       code: emailCode.value
     })
     ElMessage.success('注册成功！')

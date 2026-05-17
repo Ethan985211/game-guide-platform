@@ -27,11 +27,24 @@
         </el-form-item>
 
         <el-form-item label="内容" prop="content">
+          <div style="margin-bottom: 8px;">
+            <input
+              ref="imageInput"
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              style="display: none;"
+              @change="handleImageUpload"
+            />
+            <el-button size="small" @click="$refs.imageInput.click()" :loading="uploading">
+              📷 插入图片
+            </el-button>
+            <span style="margin-left: 8px; font-size: 12px; color: #999;">支持 JPG/PNG/GIF/WebP，最大 10MB</span>
+          </div>
           <el-input
             v-model="form.content"
             type="textarea"
             :rows="15"
-            placeholder="输入文章内容（支持HTML）"
+            placeholder="输入文章内容（支持 Markdown，图片用 ![](url) 语法）"
           />
         </el-form-item>
 
@@ -54,6 +67,8 @@ const router = useRouter()
 const formRef = ref()
 const games = ref([])
 const loading = ref(false)
+const uploading = ref(false)
+const imageInput = ref(null)
 
 const form = ref({
   title: '',
@@ -76,6 +91,42 @@ const loadGames = async () => {
     games.value = response.data
   } catch (error) {
     console.error('加载游戏失败', error)
+  }
+}
+
+const handleImageUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // 校验类型和大小
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    ElMessage.error('不支持的图片类型，仅支持 JPG/PNG/GIF/WebP')
+    return
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过 10MB')
+    return
+  }
+
+  uploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await api.post('/upload/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    // 插入 Markdown 图片语法
+    const imgMarkdown = `![${file.name}](${response.data.url})`
+    form.value.content = form.value.content + '\n' + imgMarkdown + '\n'
+    ElMessage.success('图片上传成功，已插入到文章末尾')
+  } catch (err) {
+    const detail = err.response?.data?.detail
+    ElMessage.error(detail || '图片上传失败')
+  } finally {
+    uploading.value = false
+    // 重置 input，允许重复上传同一文件
+    event.target.value = ''
   }
 }
 

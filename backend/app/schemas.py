@@ -12,6 +12,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
     code: str  # 邮箱验证码
+    birth_date: Optional[str] = None  # 出生日期 YYYY-MM-DD（年龄验证）
 
 
 class UserLogin(BaseModel):
@@ -29,6 +30,7 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     bio: Optional[str] = None
     avatar: Optional[str] = None
+    birth_date: Optional[str] = None  # YYYY-MM-DD
 
 
 class UserResponse(BaseModel):
@@ -37,6 +39,7 @@ class UserResponse(BaseModel):
     email: str  # 使用 str 而非 EmailStr，避免数据库中已存在的旧邮箱（如 system.local）导致序列化失败
     avatar: str
     bio: Optional[str]
+    birth_date: Optional[datetime] = None
     is_active: bool
     is_admin: bool
     created_at: datetime
@@ -298,3 +301,15 @@ class PaginatedResponse(BaseModel, Generic[T]):
     page: int
     page_size: int
     total_pages: int
+
+
+# ============ Image Schemas ============
+class ImageUploadResponse(BaseModel):
+    id: int
+    url: str
+    filename: str
+    original_name: str
+    file_size: int
+    mime_type: str
+    width: Optional[int] = None
+    height: Optional[int] = None
