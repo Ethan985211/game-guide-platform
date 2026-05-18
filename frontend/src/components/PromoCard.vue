@@ -16,7 +16,7 @@
         购买即支持本站
       </a>
       <a
-        href="https://vmssr.com?code=fGN3KQqi"
+        href="https://apikey.fun/register?aff=DFWDYXJJCFSW"
         target="_blank"
         rel="noopener"
         class="promo-btn promo-vmssr"
@@ -25,18 +25,7 @@
           <path d="M12 2l7 7-7 7-7-7 7-7z"/>
           <path d="M12 22V9"/>
         </svg>
-        VMSSR 代理服务
-      </a>
-      <a
-        href="https://apikey.fun/register?aff=DFWDYXJJCFSW"
-        target="_blank"
-        rel="noopener"
-        class="promo-btn promo-apikey"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-        </svg>
-        API Key 服务
+        代理服务
       </a>
     </div>
     <button class="promo-donate" @click="showDonate = true">
@@ -138,17 +127,6 @@ const showDonate = ref(false)
   background: var(--bg-primary, #fff);
   border-color: var(--accent, #ff6b00);
   color: var(--accent, #ff6b00);
-}
-
-.promo-apikey {
-  background: var(--bg-secondary, #f5f5f5);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color, #e8e8e8);
-}
-.promo-apikey:hover {
-  background: var(--bg-primary, #fff);
-  border-color: #6366f1;
-  color: #6366f1;
 }
 
 .promo-donate {
