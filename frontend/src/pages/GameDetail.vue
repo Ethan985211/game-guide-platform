@@ -90,6 +90,10 @@
         </div>
       </section>
 
+      <!-- 推广卡片 -->
+      <section class="section">
+        <PromoCard />
+      </section>
 
       <!-- 相关攻略 -->
       <section class="section">
@@ -145,6 +149,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { gameAPI, articleAPI } from '../api'
 import analytics from '../utils/analytics'
+import PromoCard from '../components/PromoCard.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -39,6 +39,11 @@
       </div>
     </section>
 
+    <!-- 推广卡片 -->
+    <div class="section">
+      <PromoCard />
+    </div>
+
     <!-- 热门游戏 -->
     <section class="section section-games">
       <div class="section-header">
@@ -134,6 +139,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api'
 import GlassWipe from '../components/GlassWipe.vue'
+import PromoCard from '../components/PromoCard.vue'
 
 const router = useRouter()
 const games = ref([])

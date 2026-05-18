@@ -144,6 +144,9 @@
             </div>
           </div>
         </div>
+
+        <!-- 推广 -->
+        <PromoCard />
       </aside>
     </div>
   </div>
@@ -164,6 +167,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { articleAPI } from '../api'
 import { markdownToHtml } from '../utils/markdown.js'
+import PromoCard from '../components/PromoCard.vue'
 
 const route = useRoute()
 const article = ref(null)

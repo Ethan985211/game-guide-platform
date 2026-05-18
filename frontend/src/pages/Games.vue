@@ -30,6 +30,11 @@
       </div>
     </div>
 
+    <!-- 推广卡片 -->
+    <div class="promo-wrapper">
+      <PromoCard />
+    </div>
+
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-state">
       <div class="loading-spinner"></div>
@@ -85,6 +90,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { gameAPI } from '../api'
+import PromoCard from '../components/PromoCard.vue'
 
 const router = useRouter()
 const games = ref([])
@@ -364,6 +370,12 @@ onMounted(loadGames)
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.promo-wrapper {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 48px 48px;
+}
 
 .empty-icon {
   font-size: 48px;
