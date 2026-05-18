@@ -62,41 +62,37 @@
     </div>
 
     <div class="page-body">
-      <!-- 角色图鉴 -->
-      <section class="section" v-if="characters.length">
-        <div class="section-header">
-          <h2 class="section-title">角色图鉴</h2>
-          <span class="section-count">{{ characters.length }} 位</span>
-        </div>
-        <div class="characters-scroll">
-          <div v-for="char in characters" :key="char.id" class="character-card">
-            <div class="char-visual" :class="rarityClass(char.rarity)">
-              <img
-                :src="char.image || '/placeholder.png'"
-                :alt="char.name"
-                @error="onImgError"
-                class="char-img"
-              />
-              <span class="char-rarity" v-if="char.rarity">{{ char.rarity }}</span>
-            </div>
-            <div class="char-info">
-              <h3 class="char-name">{{ char.name }}</h3>
-              <div class="char-tags">
-                <span v-if="char.element" class="tag tag-element">{{ char.element }}</span>
-                <span v-if="char.weapon_type" class="tag tag-weapon">{{ char.weapon_type }}</span>
+      <div class="page-main">
+        <!-- 角色图鉴 -->
+        <section class="section" v-if="characters.length">
+          <div class="section-header">
+            <h2 class="section-title">角色图鉴</h2>
+            <span class="section-count">{{ characters.length }} 位</span>
+          </div>
+          <div class="characters-scroll">
+            <div v-for="char in characters" :key="char.id" class="character-card">
+              <div class="char-visual" :class="rarityClass(char.rarity)">
+                <img
+                  :src="char.image || '/placeholder.png'"
+                  :alt="char.name"
+                  @error="onImgError"
+                  class="char-img"
+                />
+                <span class="char-rarity" v-if="char.rarity">{{ char.rarity }}</span>
+              </div>
+              <div class="char-info">
+                <h3 class="char-name">{{ char.name }}</h3>
+                <div class="char-tags">
+                  <span v-if="char.element" class="tag tag-element">{{ char.element }}</span>
+                  <span v-if="char.weapon_type" class="tag tag-weapon">{{ char.weapon_type }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- 推广卡片 -->
-      <section class="section">
-        <PromoCard />
-      </section>
-
-      <!-- 相关攻略 -->
-      <section class="section">
+        <!-- 相关攻略 -->
+        <section class="section">
         <div class="section-header">
           <h2 class="section-title">相关攻略</h2>
           <span class="section-count">{{ articles.length }} 篇</span>
@@ -131,6 +127,11 @@
         </div>
         <div v-else class="empty-hint">暂无相关攻略</div>
       </section>
+      </div>
+
+      <aside class="page-sidebar">
+        <PromoCard />
+      </aside>
     </div>
   </div>
 
@@ -434,6 +435,19 @@ onMounted(async () => {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 48px 80px;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 48px;
+}
+
+.page-main {
+  min-width: 0;
+}
+
+.page-sidebar {
+  position: sticky;
+  top: 80px;
+  align-self: start;
 }
 
 .section {
@@ -717,6 +731,12 @@ onMounted(async () => {
   }
   .page-body {
     padding: 0 20px 60px;
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .page-sidebar {
+    position: static;
+    top: auto;
   }
   .info-bar-inner {
     padding: 0 20px;
