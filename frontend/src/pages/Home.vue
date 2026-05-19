@@ -213,8 +213,8 @@ onMounted(async () => {
 
   try {
     const [gamesRes, articlesRes] = await Promise.all([
-      api.get('/api/games'),
-      api.get('/api/articles')
+      api.get('/api/games', { params: { limit: 100 } }),
+      api.get('/api/articles', { params: { limit: 100 } })
     ])
     games.value = gamesRes.data?.items || gamesRes.data || []
     articles.value = articlesRes.data?.items || articlesRes.data || []
