@@ -184,6 +184,12 @@ const gameLinkMap = {
   22: { website: 'https://www.kojimaproductions.jp/death-stranding-2', steam: '' },
   23: { website: 'https://civilization.2k.com/civ-vii/', steam: 'https://store.steampowered.com/app/289070/Sid_Meiers_Civilization_VII/' },
   24: { website: 'https://raft-game.com/', steam: 'https://store.steampowered.com/app/648800/Raft/' },
+  25: { website: 'https://gp.qq.com/', steam: '' },
+  26: { website: 'https://id5.163.com/', steam: '' },
+  27: { website: 'https://party.163.com/', steam: '' },
+  28: { website: 'https://nshm.163.com/', steam: '' },
+  29: { website: 'https://re1999.bluepoch.com/', steam: '' },
+  30: { website: 'https://lyskss.papegames.com/', steam: '' },
 }
 
 const gameLinks = computed(() => {
